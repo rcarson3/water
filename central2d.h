@@ -156,7 +156,7 @@ private:
     std::vector<vec> v_;            // Solution values at next step
 
     // Array accessor functions
-
+    //Strides in x first
     int offset(int ix, int iy) const { return iy*nx_all+ix; }
 
     vec& u(int ix, int iy)    { return u_[offset(ix,iy)]; }
@@ -180,7 +180,7 @@ private:
     // Apply limiter to all components in a vector
     static void limdiff(vec& du, const vec& um, const vec& u0, const vec& up) {
         for (int m = 0; m < du.size(); ++m)
-            du[m] = Limiter::limdiff(um[m], u0[m], up[m]);
+            du[m] = Limiter::limdiff(um[m], u0[m], up[m]); //in minmod.h
     }
 
     // Stages of the main algorithm
@@ -203,7 +203,7 @@ private:
  * $[i \Delta x, (i+1) \Delta x] \times [j \Delta y, (j+1) \Delta y]$.
  */
 
-template <class Physics, class Limiter>
+template <class Physics, class Limiter> // Won't effect much, only called once at start
 template <typename F>
 void Central2D<Physics, Limiter>::init(F f)
 {
@@ -229,7 +229,7 @@ void Central2D<Physics, Limiter>::init(F f)
  * integers `p` and `q`.
  */
 
-template <class Physics, class Limiter>
+template <class Physics, class Limiter> // Handles periodic BCs
 void Central2D<Physics, Limiter>::apply_periodic()
 {
     // Copy data between right and left boundaries
@@ -258,20 +258,29 @@ void Central2D<Physics, Limiter>::apply_periodic()
  * bound on the CFL number).
  */
 
-template <class Physics, class Limiter>
+template <class Physics, class Limiter> // Originally Takes 3rd Highest Time
 void Central2D<Physics, Limiter>::compute_fg_speeds(real& cx_, real& cy_)
 {
     using namespace std;
     real cx = 1.0e-15;
     real cy = 1.0e-15;
-    for (int iy = 0; iy < ny_all; ++iy)
-        for (int ix = 0; ix < nx_all; ++ix) {
-            real cell_cx, cell_cy;
+    real cell_cx, cell_cy;
+    int iy,ix;
+  //Should be able to use #pragma omp parallel for reduction(max:cx_) but do not have max operator in C++
+  
+#pragma omp parallel default(shared) private(iy,ix,cell_cx,cell_cy)
+  {
+    #pragma omp for collapse(2)
+    for (iy = 0; iy < ny_all; ++iy)
+        for (ix = 0; ix < nx_all; ++ix) {
+            cell_cx = 0.0;
+            cell_cy = 0.0;
             Physics::flux(f(ix,iy), g(ix,iy), u(ix,iy));
             Physics::wave_speed(cell_cx, cell_cy, u(ix,iy));
             cx = max(cx, cell_cx);
             cy = max(cy, cell_cy);
         }
+  }
     cx_ = cx;
     cy_ = cy;
 }
@@ -284,11 +293,16 @@ void Central2D<Physics, Limiter>::compute_fg_speeds(real& cx_, real& cy_)
  * In order to maintain stability, we apply a limiter here.
  */
 
-template <class Physics, class Limiter>
+template <class Physics, class Limiter> //Originally Takes Most Time
 void Central2D<Physics, Limiter>::limited_derivs()
 {
-    for (int iy = 1; iy < ny_all-1; ++iy)
-        for (int ix = 1; ix < nx_all-1; ++ix) {
+  int iy,ix;
+
+#pragma omp parallel default(shared) private(iy,ix)
+  {
+    #pragma omp for collapse(2)
+    for (iy = 1; iy < ny_all-1; ++iy)
+        for (ix = 1; ix < nx_all-1; ++ix) {
 
             // x derivs
             limdiff( ux(ix,iy), u(ix-1,iy), u(ix,iy), u(ix+1,iy) );
@@ -298,6 +312,7 @@ void Central2D<Physics, Limiter>::limited_derivs()
             limdiff( uy(ix,iy), u(ix,iy-1), u(ix,iy), u(ix,iy+1) );
             limdiff( gy(ix,iy), g(ix,iy-1), g(ix,iy), g(ix,iy+1) );
         }
+  }
 }
 
 
@@ -323,27 +338,36 @@ void Central2D<Physics, Limiter>::limited_derivs()
  * indexing scheme.
  */
 
-template <class Physics, class Limiter>
+template <class Physics, class Limiter> //Originally Takes 2nd Most Time
 void Central2D<Physics, Limiter>::compute_step(int io, real dt)
 {
     real dtcdx2 = 0.5 * dt / dx;
     real dtcdy2 = 0.5 * dt / dy;
-
+    int iy, ix, m, j, i;
+    vec uh;
+#pragma omp parallel default(shared) private(iy,ix,m,uh)
+  {
     // Predictor (flux values of f and g at half step)
-    for (int iy = 1; iy < ny_all-1; ++iy)
-        for (int ix = 1; ix < nx_all-1; ++ix) {
-            vec uh = u(ix,iy);
-            for (int m = 0; m < uh.size(); ++m) {
+    #pragma omp for collapse(2)
+    for (iy = 1; iy < ny_all-1; ++iy) {
+        for (ix = 1; ix < nx_all-1; ++ix) {
+            uh = u(ix,iy);
+            for (m = 0; m < uh.size(); ++m) {
                 uh[m] -= dtcdx2 * fx(ix,iy)[m];
                 uh[m] -= dtcdy2 * gy(ix,iy)[m];
             }
             Physics::flux(f(ix,iy), g(ix,iy), uh);
         }
+    }
+  }
 
     // Corrector (finish the step)
-    for (int iy = nghost-io; iy < ny+nghost-io; ++iy)
-        for (int ix = nghost-io; ix < nx+nghost-io; ++ix) {
-            for (int m = 0; m < v(ix,iy).size(); ++m) {
+#pragma omp parallel default(shared) private(iy,ix,m,uh)
+  {
+    #pragma omp for collapse(3)
+    for (iy = nghost-io; iy < ny+nghost-io; ++iy){
+        for (ix = nghost-io; ix < nx+nghost-io; ++ix) {
+            for (m = 0; m < v(ix,iy).size(); ++m) {
                 v(ix,iy)[m] =
                     0.2500 * ( u(ix,  iy)[m] + u(ix+1,iy  )[m] +
                                u(ix,iy+1)[m] + u(ix+1,iy+1)[m] ) -
@@ -357,13 +381,18 @@ void Central2D<Physics, Limiter>::compute_step(int io, real dt)
                                g(ix+1,iy+1)[m] - g(ix+1,iy)[m] );
             }
         }
-
+      }
+  }
     // Copy from v storage back to main grid
-    for (int j = nghost; j < ny+nghost; ++j){
-        for (int i = nghost; i < nx+nghost; ++i){
+#pragma omp parallel default(shared) private(i,j)
+  {
+#pragma omp for collapse(2)
+    for (j = nghost; j < ny+nghost; ++j){
+        for (i = nghost; i < nx+nghost; ++i){
             u(i,j) = v(i-io,j-io);
         }
     }
+  }
 }
 
 
