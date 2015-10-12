@@ -271,7 +271,7 @@ void Central2D<Physics, Limiter>::compute_fg_speeds(real& cx_, real& cy_)
 #pragma omp parallel default(shared) private(iy,ix,cell_cx,cell_cy)
   {
     #pragma omp for collapse(2)
-    for (iy = 0; iy < ny_all; ++iy)
+    for (iy = 0; iy < ny_all; ++iy) {
         for (ix = 0; ix < nx_all; ++ix) {
             cell_cx = 0.0;
             cell_cy = 0.0;
@@ -280,6 +280,7 @@ void Central2D<Physics, Limiter>::compute_fg_speeds(real& cx_, real& cy_)
             cx = max(cx, cell_cx);
             cy = max(cy, cell_cy);
         }
+      }
   }
     cx_ = cx;
     cy_ = cy;
@@ -301,7 +302,7 @@ void Central2D<Physics, Limiter>::limited_derivs()
 #pragma omp parallel default(shared) private(iy,ix)
   {
     #pragma omp for collapse(2)
-    for (iy = 1; iy < ny_all-1; ++iy)
+    for (iy = 1; iy < ny_all-1; ++iy){
         for (ix = 1; ix < nx_all-1; ++ix) {
 
             // x derivs
@@ -312,6 +313,7 @@ void Central2D<Physics, Limiter>::limited_derivs()
             limdiff( uy(ix,iy), u(ix,iy-1), u(ix,iy), u(ix,iy+1) );
             limdiff( gy(ix,iy), g(ix,iy-1), g(ix,iy), g(ix,iy+1) );
         }
+    }
   }
 }
 
@@ -348,7 +350,7 @@ void Central2D<Physics, Limiter>::compute_step(int io, real dt)
 #pragma omp parallel default(shared) private(iy,ix,m,uh)
   {
     // Predictor (flux values of f and g at half step)
-    #pragma omp for collapse(2)
+    #pragma omp for //collapse(2)
     for (iy = 1; iy < ny_all-1; ++iy) {
         for (ix = 1; ix < nx_all-1; ++ix) {
             uh = u(ix,iy);
