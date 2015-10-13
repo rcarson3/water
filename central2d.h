@@ -208,7 +208,8 @@ template <class Physics, class Limiter> // Won't effect much, only called once a
 template <typename F>
 void Central2D<Physics, Limiter>::init(F f)
 {
-    for (int iy = 0; iy < ny; ++iy)
+   #pragma omp parallel for collapse(2) 
+   for (int iy = 0; iy < ny; ++iy)
         for (int ix = 0; ix < nx; ++ix)
             f(u(nghost+ix,nghost+iy), (ix+0.5)*dx, (iy+0.5)*dy);
 }
@@ -234,6 +235,7 @@ template <class Physics, class Limiter> // Handles periodic BCs
 void Central2D<Physics, Limiter>::apply_periodic()
 {
     // Copy data between right and left boundaries
+    #pragma omp parallel for collapse(2)
     for (int iy = 0; iy < ny_all; ++iy)
         for (int ix = 0; ix < nghost; ++ix) {
             u(ix,          iy) = uwrap(ix,          iy);
@@ -241,6 +243,7 @@ void Central2D<Physics, Limiter>::apply_periodic()
         }
 
     // Copy data between top and bottom boundaries
+    #pragma omp parallel for collapse(2)
     for (int ix = 0; ix < nx_all; ++ix)
         for (int iy = 0; iy < nghost; ++iy) {
             u(ix,          iy) = uwrap(ix,          iy);
@@ -304,7 +307,10 @@ void Central2D<Physics, Limiter>::limited_derivs()
             // x derivs
             limdiff( ux(ix,iy), u(ix-1,iy), u(ix,iy), u(ix+1,iy) );
             limdiff( fx(ix,iy), f(ix-1,iy), f(ix,iy), f(ix+1,iy) );
-
+        }
+    #pragma omp parallel for collapse(2)
+    for(iy = 1; iy < ny_all-1; ++iy)
+        for(ix = 1; ix < nx_all-1; ++ix) {
             // y derivs
             limdiff( uy(ix,iy), u(ix,iy-1), u(ix,iy), u(ix,iy+1) );
             limdiff( gy(ix,iy), g(ix,iy-1), g(ix,iy), g(ix,iy+1) );
