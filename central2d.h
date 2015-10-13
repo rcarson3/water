@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cassert>
 #include <vector>
+#include <omp.h>
 
 //ldoc on
 /**
@@ -395,6 +396,7 @@ void Central2D<Physics, Limiter>::compute_step(int io, real dt)
         }
     }
   }
+  
 }
 
 
