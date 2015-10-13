@@ -235,18 +235,28 @@ template <class Physics, class Limiter> // Handles periodic BCs
 void Central2D<Physics, Limiter>::apply_periodic()
 {
     // Copy data between right and left boundaries
-    #pragma omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2) nowait
     for (int iy = 0; iy < ny_all; ++iy)
         for (int ix = 0; ix < nghost; ++ix) {
             u(ix,          iy) = uwrap(ix,          iy);
+        }
+  
+    #pragma omp parallel for collapse(2) nowait
+    for (int iy = 0; iy < ny_all; ++iy)
+        for (int ix = 0; ix < nghost; ++ix) {
             u(nx+nghost+ix,iy) = uwrap(nx+nghost+ix,iy);
         }
 
     // Copy data between top and bottom boundaries
-    #pragma omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2) nowait
     for (int ix = 0; ix < nx_all; ++ix)
         for (int iy = 0; iy < nghost; ++iy) {
             u(ix,          iy) = uwrap(ix,          iy);
+        }
+  
+      #pragma omp parallel for collapse(2)
+      for (int ix = 0; ix < nx_all; ++ix)
+        for (int iy = 0; iy < nghost; ++iy) {
             u(ix,ny+nghost+iy) = uwrap(ix,ny+nghost+iy);
         }
 }
