@@ -266,26 +266,48 @@ template <class Physics, class Limiter> // Originally Takes 3rd Highest Time
 void Central2D<Physics, Limiter>::compute_fg_speeds(real& cx_, real& cy_)
 {
     using namespace std;
+    real cx_temp, cy_temp;
     real cx = 1.0e-15;
     real cy = 1.0e-15;
     real cell_cx, cell_cy;
     int iy,ix;
   //Should be able to use #pragma omp parallel for reduction(max:cx_) but do not have max operator in C++
-  
-    #pragma omp parallel for collapse(2)
+
+    #pragma omp parallel for collapse(2) 
+    for(iy = 0; iy < ny_all; ++iy)
+        for(ix = 0; ix < nx_all; ++ix) {
+            Physics::flux(f(ix,iy),g(ix,iy),u(ix,iy));
+        }
+
+    // Below way of calculating max taken from Michael SuB and Claudia Leopold, Common Mistakes in OpenMP paper
+    #pragma omp parallel 
+    {
+    #pragma omp for collapse(2) 
     for (iy = 0; iy < ny_all; ++iy)
         for (ix = 0; ix < nx_all; ++ix) {
-            cell_cx = 0.0;
-            cell_cy = 0.0;
-            Physics::flux(f(ix,iy), g(ix,iy), u(ix,iy));
             Physics::wave_speed(cell_cx, cell_cy, u(ix,iy));
             cx = max(cx, cell_cx);
             cy = max(cy, cell_cy);
-        
         }
-    cx_ = cx;
-    cy_ = cy;
-}
+        #pragma omp flush (cx_temp,cy_temp)
+        if(cx > cx_temp) {
+            #pragma omp critical
+            {
+                if(cx > cx_temp) cx_temp = cx;
+            }
+        }
+       
+        if(cy > cy_) {
+            #pragma omp critical
+            {
+                if(cy > cy_temp) cy_temp = cy;
+            }
+        }
+    }
+    cx_ = cx_temp;
+    cy_ = cy_temp;
+
+ }
 
 /**
  * ### Derivatives with limiters
@@ -303,7 +325,6 @@ void Central2D<Physics, Limiter>::limited_derivs()
     #pragma omp parallel for collapse(2)
     for (iy = 1; iy < ny_all-1; ++iy)
         for (ix = 1; ix < nx_all-1; ++ix) {
-
             // x derivs
             limdiff( ux(ix,iy), u(ix-1,iy), u(ix,iy), u(ix+1,iy) );
             limdiff( fx(ix,iy), f(ix-1,iy), f(ix,iy), f(ix+1,iy) );
@@ -351,7 +372,7 @@ void Central2D<Physics, Limiter>::compute_step(int io, real dt)
     vec uh;
 
     // Predictor (flux values of f and g at half step)
-    #pragma omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2) private(dtcdx2,dtcdy2,uh)
     for (iy = 1; iy < ny_all-1; ++iy)
         for (ix = 1; ix < nx_all-1; ++ix) {
             uh = u(ix,iy);
@@ -364,7 +385,7 @@ void Central2D<Physics, Limiter>::compute_step(int io, real dt)
   
 
     // Corrector (finish the step)
-    #pragma omp parallel for collapse(2) 
+    #pragma omp parallel for collapse(2) private(dtcdx2,dtcdy2)
     for (iy = nghost-io; iy < ny+nghost-io; ++iy)
         for (ix = nghost-io; ix < nx+nghost-io; ++ix) {
             for (m = 0; m < v(ix,iy).size(); ++m) {
