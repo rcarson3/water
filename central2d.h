@@ -330,8 +330,8 @@ void Central2D<Physics, Limiter>::limited_derivs()
             limdiff( fx(ix,iy), f(ix-1,iy), f(ix,iy), f(ix+1,iy) );
         }
     #pragma omp parallel for collapse(2)
-    for(ix = 1; ix < nx_all-1; ++ix) {
-        for(iy = 1; iy < ny_all-1; ++iy)
+    for(ix = 1; ix < nx_all-1; ++ix) 
+        for(iy = 1; iy < ny_all-1; ++iy) {
             // y derivs
             limdiff( uy(ix,iy), u(ix,iy-1), u(ix,iy), u(ix,iy+1) );
             limdiff( gy(ix,iy), g(ix,iy-1), g(ix,iy), g(ix,iy+1) );
