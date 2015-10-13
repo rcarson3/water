@@ -269,7 +269,7 @@ void Central2D<Physics, Limiter>::compute_fg_speeds(real& cx_, real& cy_)
     int iy,ix;
   //Should be able to use #pragma omp parallel for reduction(max:cx_) but do not have max operator in C++
   
-    #pragma omp parallel for
+    #pragma omp parallel for collapse(2)
     for (iy = 0; iy < ny_all; ++iy)
         for (ix = 0; ix < nx_all; ++ix) {
             cell_cx = 0.0;
@@ -297,7 +297,7 @@ void Central2D<Physics, Limiter>::limited_derivs()
 {
   int iy,ix;
   
-    #pragma omp parallel for
+    #pragma omp parallel for collapse(2)
     for (iy = 1; iy < ny_all-1; ++iy)
         for (ix = 1; ix < nx_all-1; ++ix) {
 
@@ -345,7 +345,7 @@ void Central2D<Physics, Limiter>::compute_step(int io, real dt)
     vec uh;
 
     // Predictor (flux values of f and g at half step)
-    #pragma omp parallel for
+    #pragma omp parallel for collapse(2)
     for (iy = 1; iy < ny_all-1; ++iy)
         for (ix = 1; ix < nx_all-1; ++ix) {
             uh = u(ix,iy);
@@ -358,7 +358,7 @@ void Central2D<Physics, Limiter>::compute_step(int io, real dt)
   
 
     // Corrector (finish the step)
-    #pragma omp parallel for
+    #pragma omp parallel for collapse(2) 
     for (iy = nghost-io; iy < ny+nghost-io; ++iy)
         for (ix = nghost-io; ix < nx+nghost-io; ++ix) {
             for (m = 0; m < v(ix,iy).size(); ++m) {
@@ -379,7 +379,7 @@ void Central2D<Physics, Limiter>::compute_step(int io, real dt)
 
     // Copy from v storage back to main grid
 
-#pragma omp parallel for
+#pragma omp parallel for collapse(2)
     for (j = nghost; j < ny+nghost; ++j)
         for (i = nghost; i < nx+nghost; ++i){
             u(i,j) = v(i-io,j-io);
