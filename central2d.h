@@ -242,8 +242,8 @@ void Central2D<Physics, Limiter>::apply_periodic()
         }
 
     #pragma omp parallel for
-    for (int ix = 0; ix < nx_all; ++ix)
-        for (int iy = 0; iy < nghost; ++iy) {
+    for (int iy = 0; iy < nghost; ++iy)
+        for (int ix = 0; ix < nx_all; ++ix) {
             u(ix,          iy) = uwrap(ix,          iy);
             u(ix,ny+nghost+iy) = uwrap(ix,ny+nghost+iy);
         }
@@ -346,7 +346,7 @@ void Central2D<Physics, Limiter>::compute_step(int io, real dt)
         }
 
     // Corrector (finish the step)
-    #pragma omp parallel for 
+    #pragma omp paralel for
     for (int iy = nghost-io; iy < ny+nghost-io; ++iy)
         for (int ix = nghost-io; ix < nx+nghost-io; ++ix) {
             for (int m = 0; m < v(ix,iy).size(); ++m) {
@@ -370,6 +370,7 @@ void Central2D<Physics, Limiter>::compute_step(int io, real dt)
         for (int i = nghost; i < nx+nghost; ++i){
             u(i,j) = v(i-io,j-io);
         }
+      }
     }
 }
 
