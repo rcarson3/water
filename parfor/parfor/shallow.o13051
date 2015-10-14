@@ -1,267 +1,0 @@
-amplxe: Collection started. To stop the collection, either press CTRL-C or enter from another console window: amplxe-cl -r /home/rmc298/HW2/water/r001ah -command stop.
-amplxe: Warning: To enable hardware event-base[d] sampling, VTune Amplifier has disabled the NMI watchdog timer. The watchdog timer will be re-enabled after collection completes.
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 1.781061e-01
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.992123e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.953976e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 1.000810e-02
--
-  Volume: 4.39299
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.963989e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.994030e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.986162e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.974003e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.997129e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.991169e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.867191e-03
--
-  Volume: 4.39299
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 7.889032e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.953976e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.943962e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.846926e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.927988e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 1.002908e-02
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.887934e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.873152e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.940863e-03
--
-  Volume: 4.39299
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.964943e-03
--
-  Volume: 4.39301
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.912014e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.964943e-03
--
-  Volume: 4.39299
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.838104e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.931803e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.940147e-03
--
-  Volume: 4.39299
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.836912e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.917021e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.808064e-03
--
-  Volume: 4.39299
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.937048e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.846926e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.829044e-03
--
-  Volume: 4.39299
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.902000e-03
--
-  Volume: 4.39299
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.841919e-03
--
-  Volume: 4.39301
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.777069e-03
--
-  Volume: 4.39299
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.814978e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.881020e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.830952e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.946823e-03
--
-  Volume: 4.39301
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 1.002693e-02
--
-  Volume: 4.39299
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.874105e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.961128e-03
--
-  Volume: 4.39299
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 1.002002e-02
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.999990e-03
--
-  Volume: 4.39301
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.966850e-03
--
-  Volume: 4.39299
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 7.897139e-03
--
-  Volume: 4.39298
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.958982e-03
--
-  Volume: 4.39299
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 7.884979e-03
--
-  Volume: 4.39299
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.823084e-03
--
-  Volume: 4.393
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-Time: 9.880066e-03
--
-  Volume: 4.39301
-  Momentum: (0, 0)
-  Range: [1, 1.5]
-amplxe: Collection stopped.
-amplxe: Using result path `/home/rmc298/HW2/water/r001ah'
-amplxe: Executing actions  0 %                                                 amplxe: Executing actions  0 % Finalizing results                              amplxe: Executing actions  0 % Finalizing the result                           amplxe: Executing actions  0 % Clearing the database                           amplxe: Executing actions  8 % Clearing the database                           amplxe: Executing actions  8 % Loading 'systemcollector-en-cs-totient-02.coecisamplxe: Executing actions  8 % Loading 'tbs919490061.tb6' file                 amplxe: Executing actions  8 % Loading 'userapicollector-1214-c88567c3.trace' famplxe: Executing actions  8 % Updating precomputed scalar metrics             amplxe: Executing actions  9 % Updating precomputed scalar metrics             amplxe: Executing actions  9 % Processing profile metrics and debug informationamplxe: Executing actions 16 % Processing profile metrics and debug informationamplxe: Executing actions 16 % Setting data model parameters                   amplxe: Executing actions 16 % Resolving module symbols                        amplxe: Executing actions 16 % Resolving information for dangling locations    amplxe: Executing actions 16 % Resolving information for `ld-2.12.so'          amplxe: Executing actions 16 % Resolving information for `libpthread-2.12.so'  amplxe: Executing actions 16 % Resolving information for `libittnotify_collectoamplxe: Executing actions 16 % Resolving information for `shallow'             amplxe: Executing actions 16 % Resolving information for `libc-2.12.so'        
-amplxe: Warning: Cannot locate debugging symbols for file `/lib64/libpthread-2.12.so'.
-amplxe: Executing actions 16 % Resolving information for `libiomp5.so'         
-amplxe: Warning: Cannot locate debugging symbols for file `/lib64/ld-2.12.so'.
-amplxe: Warning: Cannot locate debugging symbols for file `/usr/local/intel/vtune_amplifier_xe_2015.3.0.403110/lib64/runtime/libittnotify_collector.so'.
-amplxe: Warning: Cannot locate debugging symbols for file `/lib64/libc-2.12.so'.
-amplxe: Executing actions 17 % Resolving information for `libiomp5.so'         amplxe: Executing actions 18 % Resolving information for `libiomp5.so'         amplxe: Executing actions 19 % Resolving information for `libiomp5.so'         amplxe: Executing actions 20 % Resolving information for `libiomp5.so'         amplxe: Executing actions 21 % Resolving information for `libiomp5.so'         amplxe: Executing actions 22 % Resolving information for `libiomp5.so'         amplxe: Executing actions 23 % Resolving information for `libiomp5.so'         amplxe: Executing actions 24 % Resolving information for `libiomp5.so'         amplxe: Executing actions 24 % Processing profile metrics and debug informationamplxe: Executing actions 25 % Processing profile metrics and debug informationamplxe: Executing actions 26 % Processing profile metrics and debug informationamplxe: Executing actions 27 % Processing profile metrics and debug informationamplxe: Executing actions 28 % Processing profile metrics and debug informationamplxe: Executing actions 29 % Processing profile metrics and debug informationamplxe: Executing actions 30 % Processing profile metrics and debug informationamplxe: Executing actions 31 % Processing profile metrics and debug informationamplxe: Executing actions 32 % Processing profile metrics and debug informationamplxe: Executing actions 32 % Setting data model parameters                   amplxe: Executing actions 33 % Setting data model parameters                   amplxe: Executing actions 33 % Precomputing frequently used data               amplxe: Executing actions 34 % Precomputing frequently used data               amplxe: Executing actions 35 % Precomputing frequently used data               amplxe: Executing actions 36 % Precomputing frequently used data               amplxe: Executing actions 37 % Precomputing frequently used data               amplxe: Executing actions 38 % Precomputing frequently used data               amplxe: Executing actions 39 % Precomputing frequently used data               amplxe: Executing actions 39 % Updating precomputed scalar metrics             amplxe: Executing actions 41 % Updating precomputed scalar metrics             amplxe: Executing actions 41 % Discarding redundant overtime data              amplxe: Executing actions 43 % Discarding redundant overtime data              amplxe: Executing actions 43 % Saving the result                               amplxe: Executing actions 45 % Saving the result                               amplxe: Executing actions 47 % Saving the result                               amplxe: Executing actions 49 % Saving the result                               amplxe: Executing actions 50 % Saving the result                               
-amplxe: Warning: Skipped generation of report `summary': no valid license can be found (Cannot connect to the license server. Make sure your license daemon process is running, the used port@host or license file is correct, and the port or hostname in the license file has not been changed.).
-amplxe: Executing actions 50 % done                                            
