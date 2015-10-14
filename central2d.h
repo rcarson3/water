@@ -376,7 +376,7 @@ void Central2D<Physics, Limiter>::compute_step(int io, real dt)
     }
   
   // Corrector (finish the step)
-  #pragma omp parallel for collapse(2)
+  #pragma omp parallel for collapse(2) 
   for (int iy = nghost-io; iy < ny+nghost-io; ++iy)
     for (int ix = nghost-io; ix < nx+nghost-io; ++ix) {
       for (int m = 0; m < v(ix,iy).size(); ++m) {
