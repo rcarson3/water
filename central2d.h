@@ -154,6 +154,9 @@ private:
     std::vector<vec> fx_;           // x differences of f
     std::vector<vec> gy_;           // y differences of g
     std::vector<vec> v_;            // Solution values at next step
+    
+//    std::vector<vec>* const up_ = &u_.data();
+//    std::vector<vec>* const vp_ = v_.data();
 
     // Array accessor functions
 
@@ -207,7 +210,11 @@ template <class Physics, class Limiter>
 template <typename F>
 void Central2D<Physics, Limiter>::init(F f)
 {
+<<<<<<< HEAD
     #pragma omp parallel for collapse(2)
+=======
+    #pragma omp for collapse(2)
+>>>>>>> fb3c86a4d76e431d5c8eea14ae47018f15191d90
     for (int iy = 0; iy < ny; ++iy)
         for (int ix = 0; ix < nx; ++ix)
             f(u(nghost+ix,nghost+iy), (ix+0.5)*dx, (iy+0.5)*dy);
@@ -233,20 +240,31 @@ void Central2D<Physics, Limiter>::init(F f)
 template <class Physics, class Limiter>
 void Central2D<Physics, Limiter>::apply_periodic()
 {
+//#pragma omp parallel
+//    {
     // Copy data between right and left boundaries
+<<<<<<< HEAD
     #pragma omp parallel for 
+=======
+    #pragma omp for
+>>>>>>> fb3c86a4d76e431d5c8eea14ae47018f15191d90
     for (int iy = 0; iy < ny_all; ++iy)
         for (int ix = 0; ix < nghost; ++ix) {
             u(ix,          iy) = uwrap(ix,          iy);
             u(nx+nghost+ix,iy) = uwrap(nx+nghost+ix,iy);
         }
 
+<<<<<<< HEAD
     #pragma omp parallel for
+=======
+    #pragma omp for
+>>>>>>> fb3c86a4d76e431d5c8eea14ae47018f15191d90
     for (int iy = 0; iy < nghost; ++iy)
         for (int ix = 0; ix < nx_all; ++ix) {
             u(ix,          iy) = uwrap(ix,          iy);
             u(ix,ny+nghost+iy) = uwrap(ix,ny+nghost+iy);
         }
+//    }
 }
 
 
@@ -266,14 +284,18 @@ void Central2D<Physics, Limiter>::compute_fg_speeds(real& cx_, real& cy_)
     using namespace std;
     real cx = 1.0e-15;
     real cy = 1.0e-15;
+<<<<<<< HEAD
     #pragma omp parallel for
+=======
+    #pragma omp for nowait
+>>>>>>> fb3c86a4d76e431d5c8eea14ae47018f15191d90
     for (int iy = 0; iy < ny_all; ++iy)
         for (int ix = 0; ix < nx_all; ++ix) {
             real cell_cx, cell_cy;
             Physics::flux(f(ix,iy), g(ix,iy), u(ix,iy));
             Physics::wave_speed(cell_cx, cell_cy, u(ix,iy));
-            cx = max(cx, cell_cx);
-            cy = max(cy, cell_cy);
+            if (cx<cell_cx) cx = cell_cx;
+            if (cy<cell_cy) cy = cell_cy;
         }
     cx_ = cx;
     cy_ = cy;
@@ -290,17 +312,26 @@ void Central2D<Physics, Limiter>::compute_fg_speeds(real& cx_, real& cy_)
 template <class Physics, class Limiter>
 void Central2D<Physics, Limiter>::limited_derivs()
 {
+<<<<<<< HEAD
     #pragma omp parallel for
+=======
+    #pragma omp for nowait
+>>>>>>> fb3c86a4d76e431d5c8eea14ae47018f15191d90
     for (int iy = 1; iy < ny_all-1; ++iy)
         for (int ix = 1; ix < nx_all-1; ++ix) {
 
             // x derivs
             limdiff( ux(ix,iy), u(ix-1,iy), u(ix,iy), u(ix+1,iy) );
             limdiff( fx(ix,iy), f(ix-1,iy), f(ix,iy), f(ix+1,iy) );
-
+            
+        }
+    
+    #pragma omp for nowait
+    for (int iy = 1; iy < ny_all-1; ++iy)
+        for (int ix = 1; ix < nx_all-1; ++ix) {
             // y derivs
-            limdiff( uy(ix,iy), u(ix,iy-1), u(ix,iy), u(ix,iy+1) );
-            limdiff( gy(ix,iy), g(ix,iy-1), g(ix,iy), g(ix,iy+1) );
+            limdiff( uy(ix,iy), u(ix, iy-1), u(ix,iy), u(ix,iy+1) );
+            limdiff( gy(ix,iy), g(ix, iy-1), g(ix,iy), g(ix,iy+1) );
         }
 }
 
@@ -332,9 +363,17 @@ void Central2D<Physics, Limiter>::compute_step(int io, real dt)
 {
     real dtcdx2 = 0.5 * dt / dx;
     real dtcdy2 = 0.5 * dt / dy;
+    if (io!=0) io = 1;
+    
+//    #pragma omp parallel
+//    {
 
     // Predictor (flux values of f and g at half step)
+<<<<<<< HEAD
     #pragma omp parallel for 
+=======
+    #pragma omp for
+>>>>>>> fb3c86a4d76e431d5c8eea14ae47018f15191d90
     for (int iy = 1; iy < ny_all-1; ++iy)
         for (int ix = 1; ix < nx_all-1; ++ix) {
             vec uh = u(ix,iy);
@@ -346,7 +385,11 @@ void Central2D<Physics, Limiter>::compute_step(int io, real dt)
         }
 
     // Corrector (finish the step)
+<<<<<<< HEAD
     #pragma omp paralel for
+=======
+    #pragma omp for nowait
+>>>>>>> fb3c86a4d76e431d5c8eea14ae47018f15191d90
     for (int iy = nghost-io; iy < ny+nghost-io; ++iy)
         for (int ix = nghost-io; ix < nx+nghost-io; ++ix) {
             for (int m = 0; m < v(ix,iy).size(); ++m) {
@@ -365,13 +408,21 @@ void Central2D<Physics, Limiter>::compute_step(int io, real dt)
         }
 
     // Copy from v storage back to main grid
+<<<<<<< HEAD
     #pragma omp parallel for 
+=======
+    #pragma omp for nowait
+>>>>>>> fb3c86a4d76e431d5c8eea14ae47018f15191d90
     for (int j = nghost; j < ny+nghost; ++j){
         for (int i = nghost; i < nx+nghost; ++i){
-            u(i,j) = v(i-io,j-io);
+            u_[(j)*nx_all+(i)] = v_[(j-io)*nx_all+(i-io)];
         }
       }
+<<<<<<< HEAD
     }
+=======
+//    }
+>>>>>>> fb3c86a4d76e431d5c8eea14ae47018f15191d90
 }
 
 
@@ -398,9 +449,13 @@ void Central2D<Physics, Limiter>::run(real tfinal)
         real dt;
         for (int io = 0; io < 2; ++io) {
             real cx, cy;
+            #pragma omp parallel
+            {
             apply_periodic();
             compute_fg_speeds(cx, cy);
             limited_derivs();
+            #pragma omp single
+                {
             if (io == 0) {
                 dt = cfl / std::max(cx/dx, cy/dy);
                 if (t + 2*dt >= tfinal) {
@@ -408,10 +463,15 @@ void Central2D<Physics, Limiter>::run(real tfinal)
                     done = true;
                 }
             }
+                }
             compute_step(io, dt);
+            #pragma omp single
             t += dt;
+            }
         }
+//        }
     }
+//    }
 }
 
 /**
@@ -440,8 +500,8 @@ void Central2D<Physics, Limiter>::solution_check()
             h_sum += h;
             hu_sum += uij[1];
             hv_sum += uij[2];
-            hmax = max(h, hmax);
-            hmin = min(h, hmin);
+            if(h > hmax) hmax = h;
+            if (h < hmin) hmin = h;
             assert( h > 0) ;
         }
     real cell_area = dx*dy;

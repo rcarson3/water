@@ -100,32 +100,188 @@
 	\section{Parallelization}
 	While we are aware that the optimal programming of this code will not wholly be due to parallelization by OpenMP, it is most certainly necessary. Furthermore, future tuning and optimization of the code may change depending on whether the code is run serially or parallel. For these reason, we first decided to parallelize the code and compare it's performance against the initial, serial code.
 		\subsection{Naive Implementation of OpenMP}
-		First, a naive implementation of OpenMP using pragmas was used. This involved placing \texttt{#pragma omp parallel for} in front of the start of each for loop in the functions \texttt{init}, \texttt{apply\_periodic}, \texttt{compute\_fg\_speeds}, \texttt{limited\_derivs}, and \texttt{compute\_step}. This proved to improve performance significantly when run on one node of Totient (24 threads), as seen in Figure~\ref{naive_omp}. 
+		First, a naive implementation of OpenMP using pragmas was used. This involved placing \texttt{\#pragma omp parallel for} in front of the start of each for loop in the functions \texttt{init}, \texttt{apply\_periodic}, \texttt{compute\_fg\_speeds}, \texttt{limited\_derivs}, and \texttt{compute\_step}. This proved to improve performance significantly when run on one node of Totient (24 threads), as seen in Figure~\ref{naive_omp}. 
 		
-		! Will include rest of part on how it performed better. Need to run 'big' simulation.
+%		! Will include rest of part on how it performed better. Need to run 'big' simulation.
 		
-		\begin{figure}[h]
-			\begin{center}
-				\includegraphics[width=0.7\columnwidth]{naive_omp}
-				\caption{Timing of entire simulation using naive implementation of OpenMP parallelized for-loops. Generated using Intel's VTUNE on Totient.}
-				\label{naive_omp}
-			\end{center}
-		\end{figure}
+%		\begin{figure}[h]
+%			\begin{center}
+%				\includegraphics[width=0.7\columnwidth]{naive_omp}
+%				\caption{Timing of entire simulation using naive implementation of OpenMP parallelized for-loops. Generated using Intel's VTUNE on Totient.}
+%				\label{naive_omp}
+%			\end{center}
+%		\end{figure}
 		
 		\subsection{OpenMP for with \texttt{collapse}}
-		OpenMP parallel for also has the \texttt{collapse} option, which essentially informs OpenMP how many nested loops are present. By knowing this, OpenMP is able to section both loops to run on multiple processors, creating blocks for each processor to work on. Results when using \texttt{collapse} can be seen in Figure~\ref{collapse_omp}. It was found that using the \texttt{collapse} option actually led to worse performance. We believe this is due to the creation of blocks, which will limit the amount of memory accesses each core has that is of unit stride. When only sectioning the for loops based on the vertical (y) direction, each processor gets a $n \times nx$ block of the array, where $n$ is some number of rows (vertical lines of computational cells) in the domain. This increases memory access locality, which in turn increases cache hits.
+		``OpenMP parallel for'' also has the \texttt{collapse} option, which essentially informs OpenMP how many nested loops are present. By knowing this, OpenMP is able to section both loops to run on multiple processors, creating blocks for each processor to work on. Results when using \texttt{collapse} can be seen in Figure~\ref{collapse_omp}. It was found that using the \texttt{collapse} option actually led to worse performance. We believe this is due to the creation of blocks, which will limit the amount of memory accesses each core has that is of unit stride. When only sectioning the for loops based on the vertical (y) direction, each processor gets a $n \times nx$ block of the array, where $n$ is some number of rows (vertical lines of computational cells) in the domain. This increases memory access locality, which in turn increases cache hits.
 			
-		! Will include rest of part on how it performed worse. Need to run 'big' simulation.
+%		! Will include rest of part on how it performed worse. Need to run 'big' simulation.
 			
+%		\begin{figure}[h]
+%			\begin{center}
+%				\includegraphics[width=0.7\columnwidth]{collapse_omp}
+%				\caption{Timing of entire simulation using implementation of OpenMP parallelized for-loops with \texttt{collapse} option. Generated using Intel's VTUNE on Totient.}
+%				\label{collapse_omp}
+%			\end{center}
+%		\end{figure}
+		
+		\subsection{OpenMP thread creation limited:}
+		
+		The constant creation of threads creates a large overhead cost that negatively effects the performance of the program. Therefore, the fewer times that a pool of threads needs to be created the better. In the previous examples, the thread pools were created each time a parallel for loop was called. In order to reduce this costly operation, a pool of threads was only  created within the main run function as shown in the below code snippet.
+		
+		\begin{verbatim}
+	    for (int io = 0; io < 2; ++io) {
+            real cx, cy;
+            #pragma omp parallel
+            {
+            apply_periodic();
+            compute_fg_speeds(cx, cy);
+            limited_derivs();
+            #pragma omp single
+                {
+            if (io == 0) {
+                dt = cfl / std::max(cx/dx, cy/dy);
+                if (t + 2*dt >= tfinal) {
+                    dt = (tfinal-t)/2;
+                    done = true;
+                }
+            }
+                }
+            compute_step(io, dt);
+            #pragma omp single
+            t += dt;
+            }
+
+		\end{verbatim}
+		
+		\noindent Sections of the code that only required one thread to execute took advantage of the omp single pragma command which tells only one thread to run that section of code while the rest wait for it to finish. Inside each of the computation calls the regular omp for pragma command is used to parallelize the various for loops being run. The performance of this operation for the top five costliest function calls when run on the big simulation can be found in Figure ~\ref{ThreadMovement}.
+		
 		\begin{figure}[h]
 			\begin{center}
-				\includegraphics[width=0.7\columnwidth]{collapse_omp}
-				\caption{Timing of entire simulation using implementation of OpenMP parallelized for-loops with \texttt{collapse} option. Generated using Intel's VTUNE on Totient.}
-				\label{collapse_omp}
+				\includegraphics[width=0.8\columnwidth]{ThreadMovement}
+				\caption{Timing of five costliest functions using fewer thread creation events. Generated using Intel's VTUNE on Totient.}
+				\label{ThreadMovement}
 			\end{center}
 		\end{figure}
+		
+		\noindent It should also be noted that these results do include the effects of attempting to force the compiler to vectorize several loops by replacing the min and max calls with an equivalent if statement min and max code. Also from Figure ~\ref{ThreadMovement}, it can be seen that the program still spends several a large amount of time in block operations. \\
+!Not sure how it compares yet to the previous case need to look at those results, but it should be better
+		
+		\subsection{OpenMP nowait implementation:}
+		
+		When using the \texttt{omp for} pragma command, an implicit barrier is placed at the end of the loops. Due to the nature of this program, it is possible in several places to be able to assume that a barrier is not needed, and therefore the \texttt{nowait} pragma command can be used. The nowait command could be safely used in the \texttt{compute\_fg\_speeds} and \texttt{limited\_derivs} functions. Then it could be partially used in the \texttt{compute\_step} function once the predictor step was calculated. If the nowait command was used for the predictor loop it is possible for a segmentation fault to occur. If a thread was able to go onto the corrector step while other threads were still in the predictor step leading to errors. The performance of this implementation for the top five costliest function calls when run on the big simulation  can be found in Figure ~\ref{bindoff}
+		
+		\begin{figure}[h]
+			\begin{center}
+				\includegraphics[width=0.8\columnwidth]{bindoff}
+				\caption{Timing of five costliest functions using \texttt{nowait} pragma command. Generated using Intel's VTUNE on Totient.}
+				\label{bindoff}
+			\end{center}
+		\end{figure}
+		
+		\noindent It can be seen by comparing Figure  ~\ref{ThreadMovement} and Figure ~\ref{bindoff} that the overall time spent in the barrier function call has gone down drastically by including the nowait call.
+		
+		\subsection{Thread Affinity:}
+		
+		OpenMP 4.0 offers the ability to describe the ordering of the threads among the CPUs/MICs. Threads can be placed near each other so on the same CPU using the OpenMP pragma command \texttt{proc\_bind(close)}. The benefit of doing this is that amount of time for synchronization between threads should decrease. The negative downside of this is that the available cache and bandwidth per thread will decrease. Another option available distributes the threads more evenly throughout the available CPUs/MIC, and it can be turned on using the OpenMP pragma command \texttt{proc\_bind(spread)}. It will lead to the opposite effects of the close command. The thread affinity was implemented on the code base that used the \texttt{nowait} pragma command. The performance of this implementation for the top five costliest function calls when run on the big simulation can be found in Figure ~\ref{nowait} and Figure ~\ref{nowait2} for the \texttt{proc\_bind(close)} pragma command. Due to system traffic, timing can vary across multiple runs. For this reason, it was decided to show two figures so some measure of variance could be judged.
+		
+		\begin{figure}[h]
+			\begin{center}
+				\includegraphics[width=0.8\columnwidth]{nowait}
+				\caption{Timing of five costliest functions using \texttt{proc\_bind(close)} pragma command for run 1. Generated using Intel's VTUNE on Totient.}
+				\label{nowait}
+			\end{center}
+		\end{figure}
+		
+		\begin{figure}[h]
+			\begin{center}
+				\includegraphics[width=0.8\columnwidth]{nowait2}
+				\caption{Timing of five costliest functions using \texttt{proc\_bind(close)} pragma command for run 2. Generated using Intel's VTUNE on Totient.}
+				\label{nowait2}
+			\end{center}
+		\end{figure}
+		
+		\noindent Then results for the \texttt{proc\_bind(spread)} command can be found in Figure ~\ref{bindspread}.
+		
+		\begin{figure}[h]
+			\begin{center}
+				\includegraphics[width=0.8\columnwidth]{bindspread}
+				\caption{Timing of five costliest functions using \texttt{proc\_bind(spread)} pragma command. Generated using Intel's VTUNE on Totient.}
+				\label{bindspread}
+			\end{center}
+		\end{figure}
+		
+		\noindent Overall, the thread affinity options have shown to have led to a decreased performance. Therefore, they will not be used in the production code.
+		
+\section{Analysis and Future Plans}
+The current implementations, while offering a sizable speed up over the strictly serial version, still leads much to be desired. Since it currently depends on the \texttt{parallel for} command to run with OpenMP automating certain commands, barriers are automatically placed into the code that limits how each processor accesses the memory of the variables. Further improvements can be made to the code by eliminating these blocking structures where allowed and only syncing the data when the need arises in order to reduce the amount of overhead costs that occur from this type of synchronization. One such place where this could be beneficial is in the \texttt{compute\_step} function. Specific structures could be used in order to ensure the predictor step is done for edge cases before the corrector begins without requiring a barrier. To do this, a more rigorous implementation of OpenMP will need to be done, which mimics more of a distributed memory parallel code. Blocks will be made of the domain, where each subdomain has ghost cells and is unaware of what happens outside of itself (except through the ghost cells). This gives more control and limits necessary communication.
+
+Once the code has been parallelized with subdomains using OpenMP, use of the Xeon Phi chips will be implemented in the code. Thus far, we have had trouble using the Xeon Phi chips via the \texttt{\#pragma offload target (mic:0)} command. We are not entirely sure of the issue, but believe it has to do with the use of templates in the C++ version of the code.
+
+Once the code is parallelized into subdomains and effectively offloaded to the Xeon Phi chip, we will attempt to vectorize the loops. Preliminarily, we have had trouble vectorizing the loops within the C++ memory structure currently used, and have not managed to use the \texttt{restrict} keyword. Without this, the compiler is easily confused about dependencies inside the loop, as it cannot be sure where separate pointers are pointing to. It may be necessary to switch to the C version of the code that was written by Professor Bindel in order to tune the code for better vectorization.
+
+\subsection{Strong and Weak Scaling}
+The current version of the code can be analyzed for its strong and weak scaling capabilities. The strong scaling will be tested using the ``big'' wave test case with 1000 points in each direction and 100 time steps between frames. The results can be seen in Table~\ref{sstable}. This is tested on the main Xeon chips. With the highest number of threads tested being 16, inter-node communication costs were avoided. VTUNE analysis was also not collected in order to remove any additional time the collection process takes. In Table~\ref{strongscale}, strong scaling is defined by Eq.~\ref{strongscale} and normalized strong scaling is defined by Eq.~\ref{normss}.
+
+\begin{equation}
+\mathrm{Strong \; Scaling} = \frac{t_{\mathrm{serial}}}{t_{\mathrm{parallel}}}
+\label{strongscale}
+\end{equation}
+
+\begin{equation}
+\mathrm{Normalized \; Strong \; Scaling} = \frac{t_{\mathrm{serial}}}{t_{\mathrm{parallel}}} \frac{1}{p}
+\label{normss}
+\end{equation}
+where $t_{\mathrm{serial}}$ and $t_{\mathrm{parallel}}$ are the times taken when running in serial or parallel, respectively, and $p$ is the number of processors. The normalized strong scaling is essentially what percentage of perfect, linear scaling is actually achieved.
+
+\begin{table}[h]
+	\begin{center}
+		\begin{tabular}{|c c c c|}
+			\hline
+			Threads & Total Time (seconds) & Strong Scaling & Normalized Strong Scaling\\ \hline
+			1 & 539 & 1.0  & 100\% \\ \hline
+			2 & 288 & 1.87 &  93.5\% \\ \hline
+			4 & 218 &  2.47&  61.7\%  \\ \hline
+			8 & 198 &  2.72&  34.0\%  \\ \hline
+			16 & 188 &  2.87& 17.9\%   \\ \hline
+		\end{tabular}
+		\caption{Strong scaling for wave simulation with 1000 mesh points in each direction and 100 timesteps between frames.}
+		\label{sstable}
+	\end{center}
+\end{table}
+
+For weak scaling, three simulations were performed, scaling the number of processors equally with the number of cells. The results can be seen in Table~\ref{wstable}. Here, weak scaling is defined by Eq.~\ref{ws}. It was decided to double the side length for each simulation in order to perform the weak scaling test, meaning the number of processors needed to be quadrupled for each run.
+
+\begin{equation}
+\mathrm{Weak \; Scaling} = \frac{t_{\mathrm{serial}}(n(p))}{t_{\mathrm{parallel}}(n(p),p)}
+\label{ws}
+\end{equation}
+
+\begin{table}[h]
+	\begin{center}
+		\begin{tabular}{|c c c c|}
+			\hline
+			Threads & Cells Per Side & Total Time (seconds) & Weak Scaling \\ \hline
+			1 & 200 & 4.0 & 1.00   \\ \hline
+			4 & 400 & 8.3 & 0.485 \\ \hline
+			16 & 800 & 73.5 & 0.0544   \\ \hline
+		\end{tabular}
+		\caption{Strong scaling for wave simulation with 1000 mesh points in each direction and 100 timesteps between frames.}
+		\label{sstable}
+	\end{center}
+\end{table}
+
+! We should probably make plots out of these tables too...
+
+We believe the weak scaling performance is very poor due to our implementation of the OpenMP. Weak scaling usually tests the importance of communication on distributed memory systems, since each processor should be performing the same amount of algorithmic work as it is in the serial case. The main difference is the size of data being communicated is largely increased with the scaling in problem size. Since this is a shared memory code, we believe this indicates poor memory handling, leading to many cache misses. This is especially evident in the largest case, where we believe the problem size exceeded the cache size, causes very poor memory use. This could be fixed by a blocking scheme, where the domain is decomposed into subdomains, in order to increase memory locality, reducing the number of cache misses substantially. Another possible reason for the poor performance of the 16 thread case is an increase in time for each communication, due to the threads existing on two separate chips.
+
+The scaling can be represented theoretically by creating an equation for the parallel time taken in the code. This would be primarily made up of two parts: the time to perform the floating point operations, and the portion spent communicating and synchronizing. In this code, since it uses shared memory, the only communications required involves OpenMP barriers and informing each processor of their section of the ``for loops''. This theoretical relation can be seen in Eq.~\ref{tss}.
+
+
+
+! Need to add this theoretical equation and explain
 \FloatBarrier
-	\bibliography{report.bib}
+	\bibliography{report.bib} 
 	\bibliographystyle{unsrt}
 	
 \end{document}
