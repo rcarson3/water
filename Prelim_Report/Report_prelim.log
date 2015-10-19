@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.15 (TeX Live 2014) (preloaded format=pdflatex 2014.5.25)  17 OCT 2015 19:04
+This is pdfTeX, Version 3.14159265-2.6-1.40.15 (TeX Live 2014) (preloaded format=pdflatex 2014.5.25)  19 OCT 2015 11:52
 entering extended mode
  \write18 enabled.
  %&-line parsing enabled.
@@ -198,11 +198,7 @@ Package: listings 2014/03/04 1.5c (Carsten Heinz)
 (/usr/local/texlive/2014/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2014/03/04 1.5c listings language file
 )
-(./Report_prelim.aux
-
-LaTeX Warning: Label `sstable' multiply defined.
-
-)
+(./Report_prelim.aux)
 \openout1 = `Report_prelim.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 51.
@@ -395,50 +391,61 @@ File: bindspread.png Graphic file (type png)
 Package pdftex.def Info: bindspread.png used on input line 208.
 (pdftex.def)             Requested size: 375.80544pt x 33.57411pt.
  [6 <./nowait.png> <./nowait2.png> <./bindspread.png>]
+<ssplot.png, id=44, 481.8pt x 361.35pt>
+File: ssplot.png Graphic file (type png)
+ <use ssplot.png>
+Package pdftex.def Info: ssplot.png used on input line 251.
+(pdftex.def)             Requested size: 281.85587pt x 211.39717pt.
+
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
+[7] <wsplot.png, id=50, 481.8pt x 361.35pt>
+File: wsplot.png Graphic file (type png)
+ <use wsplot.png>
+Package pdftex.def Info: wsplot.png used on input line 280.
+(pdftex.def)             Requested size: 281.85587pt x 211.39717pt.
 
-LaTeX Warning: Reference `wstable' on page 7 undefined on input line 253.
 
-[7]
+LaTeX Warning: `h' float specifier changed to `ht'.
 
-LaTeX Warning: Reference `tss' on page 8 undefined on input line 276.
-
-(./Report_prelim.bbl
+Missing character: There is no Â in font cmr12!
+Missing character: There is no   in font cmr12!
+[8 <./ssplot.png>] [9 <./wsplot.png>] (./Report_prelim.bbl
 
 LaTeX Warning: Empty `thebibliography' environment on input line 3.
 
-) [8] [9] (./Report_prelim.aux)
+) [10] (./Report_prelim.aux)
 
 LaTeX Warning: There were undefined references.
 
-
-LaTeX Warning: There were multiply-defined labels.
-
  ) 
 Here is how much of TeX's memory you used:
- 4371 strings out of 493117
- 63008 string characters out of 6135433
- 166511 words of memory out of 5000000
- 7756 multiletter control sequences out of 15000+600000
+ 4384 strings out of 493117
+ 63169 string characters out of 6135433
+ 165511 words of memory out of 5000000
+ 7767 multiletter control sequences out of 15000+600000
  11468 words of font info for 43 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  38i,8n,36p,1225b,280s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/local/texlive/2014/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/t
 exlive/2014/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/te
-xlive/2014/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/local/tex
-live/2014/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texli
-ve/2014/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/texlive
-/2014/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/20
-14/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/201
-4/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb></usr/local/texlive/2014
-/texmf-dist/fonts/type1/urw/courier/ucrb8a.pfb></usr/local/texlive/2014/texmf-d
-ist/fonts/type1/urw/courier/ucrr8a.pfb>
-Output written on Report_prelim.pdf (9 pages, 282573 bytes).
+xlive/2014/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/tex
+live/2014/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/local/texl
+ive/2014/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/local/texliv
+e/2014/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/
+2014/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/texlive/20
+14/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/local/texlive/2014/
+texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/2014/tex
+mf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2014/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texlive/2014/texmf-
+dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb></usr/local/texlive/2014/texmf-d
+ist/fonts/type1/urw/courier/ucrb8a.pfb></usr/local/texlive/2014/texmf-dist/font
+s/type1/urw/courier/ucrr8a.pfb>
+Output written on Report_prelim.pdf (10 pages, 330011 bytes).
 PDF statistics:
- 86 PDF objects out of 1000 (max. 8388607)
- 51 compressed objects within 1 object stream
+ 109 PDF objects out of 1000 (max. 8388607)
+ 65 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
- 46 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 56 words of extra memory for PDF output out of 10000 (max. 10000000)
 

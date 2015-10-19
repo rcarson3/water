@@ -213,15 +213,11 @@
 		
 		\noindent Overall, the thread affinity options have shown to have led to a decreased performance. Therefore, they will not be used in the production code.
 		
-\section{Analysis and Future Plans}
+\section{Analysis}
 The current implementations, while offering a sizable speed up over the strictly serial version, still leads much to be desired. Since it currently depends on the \texttt{parallel for} command to run with OpenMP automating certain commands, barriers are automatically placed into the code that limits how each processor accesses the memory of the variables. Further improvements can be made to the code by eliminating these blocking structures where allowed and only syncing the data when the need arises in order to reduce the amount of overhead costs that occur from this type of synchronization. One such place where this could be beneficial is in the \texttt{compute\_step} function. Specific structures could be used in order to ensure the predictor step is done for edge cases before the corrector begins without requiring a barrier. To do this, a more rigorous implementation of OpenMP will need to be done, which mimics more of a distributed memory parallel code. Blocks will be made of the domain, where each subdomain has ghost cells and is unaware of what happens outside of itself (except through the ghost cells). This gives more control and limits necessary communication.
 
-Once the code has been parallelized with subdomains using OpenMP, use of the Xeon Phi chips will be implemented in the code. Thus far, we have had trouble using the Xeon Phi chips via the \texttt{\#pragma offload target (mic:0)} command. We are not entirely sure of the issue, but believe it has to do with the use of templates in the C++ version of the code.
-
-Once the code is parallelized into subdomains and effectively offloaded to the Xeon Phi chip, we will attempt to vectorize the loops. Preliminarily, we have had trouble vectorizing the loops within the C++ memory structure currently used, and have not managed to use the \texttt{restrict} keyword. Without this, the compiler is easily confused about dependencies inside the loop, as it cannot be sure where separate pointers are pointing to. It may be necessary to switch to the C version of the code that was written by Professor Bindel in order to tune the code for better vectorization.
-
 \subsection{Strong and Weak Scaling}
-The current version of the code can be analyzed for its strong and weak scaling capabilities. The strong scaling will be tested using the ``big'' wave test case with 1000 points in each direction and 100 time steps between frames. The results can be seen in Table~\ref{sstable}. This is tested on the main Xeon chips. With the highest number of threads tested being 16, inter-node communication costs were avoided. VTUNE analysis was also not collected in order to remove any additional time the collection process takes. In Table~\ref{strongscale}, strong scaling is defined by Eq.~\ref{strongscale} and normalized strong scaling is defined by Eq.~\ref{normss}.
+The current version of the code can be analyzed for its strong and weak scaling capabilities. The strong scaling will be tested using the ``big'' wave test case with 1000 points in each direction and 100 time steps between frames. The results can be seen in Table~\ref{sstable}. This is tested on the main Xeon chips. With the highest number of threads tested being 16, inter-node communication costs were avoided. VTUNE analysis was also not collected in order to remove any additional time the collection process takes. In Table~\ref{strongscale}, strong scaling is defined by Eq.~\ref{strongscale} and strong scaling efficiency is defined by Eq.~\ref{normss}.
 
 \begin{equation}
 \mathrm{Strong \; Scaling} = \frac{t_{\mathrm{serial}}}{t_{\mathrm{parallel}}}
@@ -229,16 +225,16 @@ The current version of the code can be analyzed for its strong and weak scaling 
 \end{equation}
 
 \begin{equation}
-\mathrm{Normalized \; Strong \; Scaling} = \frac{t_{\mathrm{serial}}}{t_{\mathrm{parallel}}} \frac{1}{p}
+\mathrm{Strong \; Scaling \; Efficiency} = \frac{t_{\mathrm{serial}}}{t_{\mathrm{parallel}}} \frac{1}{p}
 \label{normss}
 \end{equation}
-where $t_{\mathrm{serial}}$ and $t_{\mathrm{parallel}}$ are the times taken when running in serial or parallel, respectively, and $p$ is the number of processors. The normalized strong scaling is essentially what percentage of perfect, linear scaling is actually achieved.
+where $t_{\mathrm{serial}}$ and $t_{\mathrm{parallel}}$ are the times taken when running in serial or parallel, respectively, and $p$ is the number of processors. The strong scaling efficiency is essentially what percentage of perfect linear scaling is actually achieved. This is plotted in Figure~\ref{ssplot}.
 
 \begin{table}[h]
 	\begin{center}
 		\begin{tabular}{|c c c c|}
 			\hline
-			Threads & Total Time (seconds) & Strong Scaling & Normalized Strong Scaling\\ \hline
+			Threads & Total Time (seconds) & Strong Scaling & Strong Scaling Efficiency \\ \hline
 			1 & 539 & 1.0  & 100\% \\ \hline
 			2 & 288 & 1.87 &  93.5\% \\ \hline
 			4 & 218 &  2.47&  61.7\%  \\ \hline
@@ -250,7 +246,15 @@ where $t_{\mathrm{serial}}$ and $t_{\mathrm{parallel}}$ are the times taken when
 	\end{center}
 \end{table}
 
-For weak scaling, three simulations were performed, scaling the number of processors equally with the number of cells. The results can be seen in Table~\ref{wstable}. Here, weak scaling is defined by Eq.~\ref{ws}. It was decided to double the side length for each simulation in order to perform the weak scaling test, meaning the number of processors needed to be quadrupled for each run.
+		\begin{figure}[h]
+			\begin{center}
+				\includegraphics[width=0.6\columnwidth]{ssplot}
+				\caption{Plot of strong scaling, representing the data shown in Table~\ref{sstable}.}
+				\label{ssplot}
+			\end{center}
+		\end{figure}
+
+For weak scaling, three simulations were performed, scaling the number of processors equally with the number of cells. The results can be seen in Table~\ref{wstable}. Here, weak scaling is defined by Eq.~\ref{ws}. It was decided to double the side length for each simulation in order to perform the weak scaling test, meaning the number of processors needed to be quadrupled for each run. A plot of the weak scaling can also be seen in Figure~\ref{wsplot}. A more thorough weak scaling test is planned for the future.
 
 \begin{equation}
 \mathrm{Weak \; Scaling} = \frac{t_{\mathrm{serial}}(n(p))}{t_{\mathrm{parallel}}(n(p),p)}
@@ -267,19 +271,42 @@ For weak scaling, three simulations were performed, scaling the number of proces
 			16 & 800 & 73.5 & 0.0544   \\ \hline
 		\end{tabular}
 		\caption{Strong scaling for wave simulation with 1000 mesh points in each direction and 100 timesteps between frames.}
-		\label{sstable}
+		\label{wstable}
 	\end{center}
 \end{table}
 
-! We should probably make plots out of these tables too...
+		\begin{figure}[h]
+			\begin{center}
+				\includegraphics[width=0.6\columnwidth]{wsplot}
+				\caption{Plot of weak scaling, representing the data shown in Table~\ref{wstable}.}
+				\label{wsplot}
+			\end{center}
+		\end{figure}
 
 We believe the weak scaling performance is very poor due to our implementation of the OpenMP. Weak scaling usually tests the importance of communication on distributed memory systems, since each processor should be performing the same amount of algorithmic work as it is in the serial case. The main difference is the size of data being communicated is largely increased with the scaling in problem size. Since this is a shared memory code, we believe this indicates poor memory handling, leading to many cache misses. This is especially evident in the largest case, where we believe the problem size exceeded the cache size, causes very poor memory use. This could be fixed by a blocking scheme, where the domain is decomposed into subdomains, in order to increase memory locality, reducing the number of cache misses substantially. Another possible reason for the poor performance of the 16 thread case is an increase in time for each communication, due to the threads existing on two separate chips.
 
-The scaling can be represented theoretically by creating an equation for the parallel time taken in the code. This would be primarily made up of two parts: the time to perform the floating point operations, and the portion spent communicating and synchronizing. In this code, since it uses shared memory, the only communications required involves OpenMP barriers and informing each processor of their section of the ``for loops''. This theoretical relation can be seen in Eq.~\ref{tss}.
+The scaling can be represented theoretically by creating an equation for the parallel time taken in the code. This would be primarily made up of two parts: the time to perform the floating point operations, and the portion spent communicating and synchronizing. In this code, since it uses shared memory, the only communications required involves OpenMP barriers and informing each processor of their section of the ``for loops''. These communications will be incorporated into the relation using the variable $t_c$. Predicting the value of $t_c$ consistently is difficult due to uncertainty in how long processors will be required to wait at a barrier. Through running simulations at varying parameters, it may be possible to get a rough estimate of the communication time per processor, which could then be used in this model to approximate the scaling on a specific simulation. 
+
+The expression for time taken to execute the simulation in parallel can be represented by Eq.~\ref{part}.
+
+\begin{equation}
+t_{\mathrm{parallel}} = \frac{t_{\mathrm{serial}}}{p} + p t_c
+\label{part}
+\end{equation}
+
+This equation assumes that the serial work will be evenly distributed among all processors, leading to the serial work being completed in $t_{\mathrm{serial}}/p$ time. The cost of parallelizing the code per processor, in the form of communication, barriers, and synchronization, is represented by $t_c$. With an expression for the parallel time, it is now possible to create rough expressions for scaling, shown in Eq.~\ref{exps}. The difference in strong and weak scaling appears in the values used for $t_{\mathrm{serial}}$ and $t_c$.
+
+\begin{equation}
+\mathrm{Scaling} \approx \frac{t_{\mathrm{serial}}}{t_{\mathrm{parallel}}} = \frac{t_{\mathrm{serial}}}{\frac{t_{\mathrm{serial}}}{p} + p t_c} = \left (\frac{1}{p}+p \frac{t_c}{t_{\mathrm{serial}}} \right)^{-1}
+\label{exps}
+\end{equation}
+
+\section{Future Work}
+Once the code has been parallelized with subdomains using OpenMP, use of the Xeon Phi chips will be implemented in the code. Thus far, we have had trouble using the Xeon Phi chips via the \texttt{\#pragma offload target (mic:0)} command. We are not entirely sure of the issue, but believe it has to do with the use of templates in the C++ version of the code.
+
+Once the code is parallelized into subdomains and effectively offloaded to the Xeon Phi chip, we will attempt to vectorize the loops. Preliminarily, we have had trouble vectorizing the loops within the C++ memory structure currently used, and have not managed to use the \texttt{restrict} keyword. Without this, the compiler is easily confused about dependencies inside the loop, as it cannot be sure where separate pointers are pointing to. It may be necessary to switch to the C version of the code that was written by Professor Bindel in order to tune the code for better vectorization.
 
 
-
-! Need to add this theoretical equation and explain
 \FloatBarrier
 	\bibliography{report.bib} 
 	\bibliographystyle{unsrt}
