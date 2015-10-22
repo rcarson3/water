@@ -1,0 +1,8 @@
+This is a review of group 19 from group 18.
+
+You guys did a good job of performance analysis, including looking at what lines of code take the most time and what function calls are the slowest. You did a lot of thinking in terms of what to do for parallelization, and have shown good preliminary results and analysis for what you have done. You did a good analysis of strong and weak scaling. 
+
+One thing to note is that the reason #omp parallel for may have poor scaling results is because of load imbalance as well. Just something you might want to talk about in your report.
+
+Somethings you could improve on:
+Try looking at some sort of blocking scheme. Once you have a blocking scheme, you can then implement some sort of kernel to do a small block at a time. Try to start thinking about vectorization. There are some fairly trivial things you can try to do to vectorize your code. In particular, look at the corrector step of the compute_step() method. That step is slow because of low cache hits and unvectorized code. You can also look at the optimization reports provided by the compiler. You can try refactoring just the corrector part of the compute_step() method so that you are copying a block, vectorizing, and then copying back.
