@@ -6,3 +6,5 @@ One thing to note is that the reason #omp parallel for may have poor scaling res
 
 Somethings you could improve on:
 Try looking at some sort of blocking scheme. Once you have a blocking scheme, you can then implement some sort of kernel to do a small block at a time. Try to start thinking about vectorization. There are some fairly trivial things you can try to do to vectorize your code. In particular, look at the corrector step of the compute_step() method. That step is slow because of low cache hits and unvectorized code. You can also look at the optimization reports provided by the compiler. You can try refactoring just the corrector part of the compute_step() method so that you are copying a block, vectorizing, and then copying back.
+
+Once you have some sort of blocking, you can do something clever with parallelism as well and perform several steps on a block at once with a thread.
