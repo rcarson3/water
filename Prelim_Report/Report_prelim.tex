@@ -307,8 +307,8 @@ Once the code has been parallelized with subdomains using OpenMP, use of the Xeo
 Once the code is parallelized into subdomains and effectively offloaded to the Xeon Phi chip, we will attempt to vectorize the loops. Preliminarily, we have had trouble vectorizing the loops within the C++ memory structure currently used, and have not managed to use the \texttt{restrict} keyword. Without this, the compiler is easily confused about dependencies inside the loop, as it cannot be sure where separate pointers are pointing to. It may be necessary to switch to the C version of the code that was written by Professor Bindel in order to tune the code for better vectorization.
 
 
-\FloatBarrier
-	\bibliography{report.bib} 
-	\bibliographystyle{unsrt}
+%\FloatBarrier
+%	\bibliography{report.bib} 
+%	\bibliographystyle{unsrt}
 	
 \end{document}

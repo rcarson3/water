@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.15 (TeX Live 2014) (preloaded format=pdflatex 2014.5.25)  19 OCT 2015 11:52
+This is pdfTeX, Version 3.14159265-2.6-1.40.15 (TeX Live 2014) (preloaded format=pdflatex 2014.5.25)  19 OCT 2015 12:27
 entering extended mode
  \write18 enabled.
  %&-line parsing enabled.
@@ -411,18 +411,14 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 
 Missing character: There is no Â in font cmr12!
 Missing character: There is no   in font cmr12!
-[8 <./ssplot.png>] [9 <./wsplot.png>] (./Report_prelim.bbl
-
-LaTeX Warning: Empty `thebibliography' environment on input line 3.
-
-) [10] (./Report_prelim.aux)
+[8 <./ssplot.png>] [9 <./wsplot.png>] [10] (./Report_prelim.aux)
 
 LaTeX Warning: There were undefined references.
 
  ) 
 Here is how much of TeX's memory you used:
- 4384 strings out of 493117
- 63169 string characters out of 6135433
+ 4381 strings out of 493117
+ 63129 string characters out of 6135433
  165511 words of memory out of 5000000
  7767 multiletter control sequences out of 15000+600000
  11468 words of font info for 43 fonts, out of 8000000 for 9000
@@ -442,7 +438,7 @@ f-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texlive/2014/texmf-
 dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb></usr/local/texlive/2014/texmf-d
 ist/fonts/type1/urw/courier/ucrb8a.pfb></usr/local/texlive/2014/texmf-dist/font
 s/type1/urw/courier/ucrr8a.pfb>
-Output written on Report_prelim.pdf (10 pages, 330011 bytes).
+Output written on Report_prelim.pdf (10 pages, 329728 bytes).
 PDF statistics:
  109 PDF objects out of 1000 (max. 8388607)
  65 compressed objects within 1 object stream
