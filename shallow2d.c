@@ -67,14 +67,14 @@ void shallow2dv_speed(float* restrict cxy,
     cxy[1] = cy;
 }
 
-
+// Global
 void shallow2d_flux(float* FU, float* GU, const float* U,
                     int ncell, int field_stride)
 {
-    shallow2dv_flux(FU, FU+field_stride, FU+2*field_stride,
-                    GU, GU+field_stride, GU+2*field_stride,
-                    U,  U +field_stride, U +2*field_stride,
-                    g, ncell);
+  shallow2dv_flux(FU, FU+field_stride, FU+2*field_stride,
+                  GU, GU+field_stride, GU+2*field_stride,
+                  U,  U +field_stride, U +2*field_stride,
+                  g, ncell);
 }
 
 
@@ -82,4 +82,21 @@ void shallow2d_speed(float* cxy, const float* U,
                      int ncell, int field_stride)
 {
     shallow2dv_speed(cxy, U, U+field_stride, U+2*field_stride, g, ncell);
+}
+
+// Processor Specific
+void shallow2d_flux_(float* FU_, float* GU_, const float* U_,
+                    int ncell_, int field_stride_)
+{
+  shallow2dv_flux(FU_, FU_+field_stride_, FU_+2*field_stride_,
+                  GU_, GU_+field_stride_, GU_+2*field_stride_,
+                  U_,  U_ +field_stride_, U_ +2*field_stride_,
+                  g, ncell_);
+}
+
+
+void shallow2d_speed_(float* cxy_, const float* U_,
+                     int ncell_, int field_stride_)
+{
+  shallow2dv_speed(cxy_, U_, U_+field_stride_, U_+2*field_stride_, g, ncell_);
 }

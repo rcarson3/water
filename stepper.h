@@ -40,6 +40,11 @@ typedef struct central2d_t {
     int nfield;   // Number of components in system
     int nx, ny;   // Grid resolution in x/y (without ghost cells)
     int ng;       // Number of ghost cells
+    int imin, imin_, imino, imino_; //global starting index, local starting index (o with ghost)
+    int jmin, jmin_, jmino, jmino_; //global starting index, local starting index (o with ghost)
+    int imax, imax_, imaxo, imaxo_; //global ending index, local ending index (o with ghost)
+    int jmax, jmax_, jmaxo, jmaxo_; //global ending index, local ending index (o with ghost)
+
     float dx, dy; // Cell width in x/y
     float cfl;    // Max allowed CFL number
 
@@ -63,6 +68,8 @@ typedef struct central2d_t {
  * functions.
  */
 central2d_t* central2d_init(float w, float h, int nx, int ny,
+                            int imin, int imin_, int jmin, int jmin_,
+                            int imax, int imax_, int jmax, int jmax_,
                             int nfield, flux_t flux, speed_t speed,
                             float cfl);
 void central2d_free(central2d_t* sim);
@@ -85,7 +92,7 @@ int  central2d_offset(central2d_t* sim, int k, int ix, int iy);
  * that we always take steps in multiples of two so that we end
  * at the reference grid.
  */
-int central2d_run(central2d_t* sim, float tfinal);
+int central2d_run(central2d_t* sim_, central2d_t* sim, float tfinal);
 
 /**
  * ### Applying boundary conditions
@@ -100,7 +107,13 @@ int central2d_run(central2d_t* sim, float tfinal);
  * public in the eventuality that I might swap in a function pointer
  * for applying the BCs.
  */
-void central2d_periodic(float* u, int nx, int ny, int ng, int nfield);
+void central2d_BCset(central2d_t* sim_, central2d_t* sim);
+
+
+// Subdomain decomposition
+void loc2global(central2d_t* sim_,central2d_t*  sim);
+
+void init_subdomain(central2d_t* sim_,central2d_t* sim);
 
 //ldoc off
 #endif /* STEPPER_H */

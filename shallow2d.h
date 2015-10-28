@@ -51,10 +51,17 @@
  * $y$ momentum is at `U+2*field_stride`.
  */
 
+// Global
 void shallow2d_flux(float* FU, float* GU, const float* U,
                     int ncell, int field_stride);
 void shallow2d_speed(float* cxy, const float* U,
                      int ncell, int field_stride);
+
+// Processor specific
+void shallow2d_flux_(float* FU_, float* GU_, const float* U_,
+                    int ncell_, int field_stride_);
+void shallow2d_speed_(float* cxy_, const float* U_,
+                     int ncell_, int field_stride_);
 
 //ldoc off
 #endif /* SHALLOW2D_H */

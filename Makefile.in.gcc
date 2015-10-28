@@ -1,13 +1,8 @@
 CC=gcc
 CFLAGS=-std=c99 -g
 
-<<<<<<< HEAD
-# If you're using icc, these are good flags to try
-OPTFLAGS=-O3 -fopenmp
-=======
 # If you're using gcc, these are good flags to try
-OPTFLAGS=-O3 -march=native -fopenmp
->>>>>>> a2b92c445ef2f1d542eec71b849ea0bf763f3e42
+OPTFLAGS=-O3 -fopenmp
 
 CFLAGS+=$(OPTFLAGS)
 PYTHON=python

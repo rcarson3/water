@@ -13,6 +13,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 //ldoc on
 /**
@@ -209,22 +210,94 @@ int run_sim(lua_State* L)
     double ftime = lget_number(L, "ftime", 0.01);
     int nx = lget_int(L, "nx", 200);
     int ny = lget_int(L, "ny", nx);
+    int npx = lget_int(L, "npx", 4);
+    int npy = lget_int(L, "npy", npx);
     int frames = lget_int(L, "frames", 50);
     const char* fname = lget_string(L, "out", "sim.out");
+    double tcompute = 0.0;
 
-    central2d_t* sim = central2d_init(w,h, nx,ny,
-                                      3, shallow2d_flux, shallow2d_speed, cfl);
+    central2d_t* sim = central2d_init(w,h,nx,ny,
+                                      0,0,0,0,nx,nx,ny,ny,
+                                      3,shallow2d_flux,shallow2d_speed,
+                                      cfl);
     lua_init_sim(L,sim);
     printf("%g %g %d %d %g %d %g\n", w, h, nx, ny, cfl, frames, ftime);
     FILE* viz = viz_open(fname, sim);
     solution_check(sim);
     viz_frame(viz, sim);
+  
+#ifdef _OPENMP
+  //Parallel variables
+  int irank;
+  double w_, h_;
+  int nx_, ny_, imin_,imax_,jmin_,jmax_;
+  central2d_t * sim_;
+  
+  // Check valid number of proccesors used
+  if(nx%npx!=0) {
+    printf("Nx not evenly divisible by npx \n");
+    exit(-1);
+  }
+  if(ny%npy!=0) {
+    printf("Ny not evenly divisible by npy \n");
+    exit(-1);
+  }
 
-    double tcompute = 0;
+  int nproc = npx*npy;
+  omp_set_dynamic(0);     // Explicitly disable dynamic teams
+  omp_set_num_threads(nproc);
+  
+  //Initialize parallel environment
+#pragma omp parallel private(irank,w_,h_,nx_,ny_, sim_, imin_,jmin_,imax_,jmax_)
+  {
+    // Can't have shallow2d_flux_ or shallow2d_speed_ be private unless it is known about during compiling time. Also cannot use default(private) because C has some variables that must be shared.... Lame
+    int nprocpos = omp_get_num_threads();
+
+    if(nprocpos < nproc){
+      printf("Asked for more processors than available \n");
+      exit(-1);
+    }
+    
+    int irank = omp_get_thread_num();
+    //Change to indexing starting at 1
+    irank = irank+1;
+    
+    //Make first thread the root
+    int iroot = 1;
+    if(irank==iroot) {printf("Number of threads used: %d\n",nproc);}
+    // Decompose into subdomains
+    w_ = w/npx;
+    h_ = h/npy;
+    nx_ = nx/npx;
+    ny_ = ny/npy;
+    
+    int rank = 0;
+    // Tile starting from bottom left, moving to right, then up
+    for(int j=1; j<=npy; j++)
+      for(int i=1; i<=npx; i++){
+        rank += 1;
+        if(rank==irank){
+          imin_ = nx_*(i-1);
+          jmin_ = ny_*(j-1);
+          imax_ = nx_*i;
+          jmax_ = ny_*j;
+        }
+    }
+    sim_ = central2d_init(w_,h_,nx_,ny_,
+                          0,imin_,0,jmin_,nx,imax_,ny,jmax_,
+                          3, shallow2d_flux_, shallow2d_speed_,cfl);
+    init_subdomain(sim_,sim);
+#endif
+  
+  
     for (int i = 0; i < frames; ++i) {
 #ifdef _OPENMP
         double t0 = omp_get_wtime();
-        int nstep = central2d_run(sim, ftime);
+        // Compute on local data
+        int nstep = central2d_run(sim_,sim, ftime);
+        // Transmit local data to global field
+        loc2global(sim_,sim);
+        # pragma omp barrier
         double t1 = omp_get_wtime();
         double elapsed = t1-t0;
 #elif defined SYSTIME
@@ -237,17 +310,67 @@ int run_sim(lua_State* L)
         int nstep = central2d_run(sim, ftime);
         double elapsed = 0;
 #endif
-        solution_check(sim);
-        tcompute += elapsed;
-        printf("  Time: %e (%e for %d steps)\n", elapsed, elapsed/nstep, nstep);
-        viz_frame(viz, sim);
+      if(irank == iroot) {
+          solution_check(sim);
+          tcompute += elapsed;
+          printf("  Time: %e (%e for %d steps)\n", elapsed, elapsed/nstep, nstep);
+          viz_frame(viz, sim);
+      }
     }
+#ifdef _OPENMP
+    //End multiple processors
+  }
+#endif
     printf("Total compute time: %e\n", tcompute);
 
     central2d_free(sim);
     return 0;
 }
 
+void loc2global(central2d_t* sim_,central2d_t*  sim)
+{
+  int nx_ = sim_ -> nx;
+  int ny_ = sim_ -> ny;
+  int imin_ = sim_ -> imin_;
+  int jmin_ = sim_ -> jmin_;
+  float* u = sim->u;
+  float* u_ = sim_->u;
+  
+  //Each processor takes it's data from the right spots in the global sim
+  for(int j=0;j<=ny_; j++)
+    for(int i=0;i<=nx_; i++){
+      u[central2d_offset(sim,0,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,0,i,j)];
+      u[central2d_offset(sim,1,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,1,i,j)];
+      u[central2d_offset(sim,2,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,2,i,j)];
+      u[central2d_offset(sim,3,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,3,i,j)];
+      u[central2d_offset(sim,4,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,4,i,j)];
+    }
+}
+
+void init_subdomain(central2d_t* sim_,central2d_t* sim)
+{
+
+  int nx_ = sim_ -> nx;
+
+  int ny_ = sim_ -> ny;
+  int imin_ = sim_ -> imin_;
+  int jmin_ = sim_ -> jmin_;
+  float* u = sim->u;
+  float* u_ = sim_->u;
+  
+  //Each processor takes it's data from the right spots in the global sim
+  for(int j=0;j<=ny_; j++)
+    for(int i=0;i<=nx_; i++){
+      u_[central2d_offset(sim_,0,i,j)] = u[central2d_offset(sim,0,imin_+i,jmin_+j)];
+      u_[central2d_offset(sim_,1,i,j)] = u[central2d_offset(sim,1,imin_+i,jmin_+j)];
+      u_[central2d_offset(sim_,2,i,j)] = u[central2d_offset(sim,2,imin_+i,jmin_+j)];
+      u_[central2d_offset(sim_,3,i,j)] = u[central2d_offset(sim,3,imin_+i,jmin_+j)];
+      u_[central2d_offset(sim_,4,i,j)] = u[central2d_offset(sim,4,imin_+i,jmin_+j)];
+    }
+  
+  
+  
+}
 
 /**
  * ### Main

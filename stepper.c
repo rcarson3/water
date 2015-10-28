@@ -6,6 +6,9 @@
 #include <assert.h>
 #include <stdbool.h>
 
+#include <stdio.h>
+#include <omp.h>
+
 //ldoc on
 /**
  * ## Implementation
@@ -14,6 +17,8 @@
  */
 
 central2d_t* central2d_init(float w, float h, int nx, int ny,
+                            int imin, int imin_, int jmin, int jmin_,
+                            int imax, int imax_, int jmax, int jmax_,
                             int nfield, flux_t flux, speed_t speed,
                             float cfl)
 {
@@ -23,6 +28,27 @@ central2d_t* central2d_init(float w, float h, int nx, int ny,
     central2d_t* sim = (central2d_t*) malloc(sizeof(central2d_t));
     sim->nx = nx;
     sim->ny = ny;
+  
+    sim->imin   = imin;
+    sim->imin_  = imin_;
+    sim->imino  = imin - ng;
+    sim->imino_ = imin_ - ng;
+  
+    sim->jmin   = jmin;
+    sim->jmin_  = jmin_;
+    sim->jmino  = jmin  - ng;
+    sim->jmino_ = jmin_ - ng;
+  
+    sim->imax   = imax;
+    sim->imax_  = imax_;
+    sim->imaxo  = imax  + ng;
+    sim->imaxo_ = imax_ + ng;
+  
+    sim->jmax   = jmax;
+    sim->jmax_  = jmax_;
+    sim->jmaxo  = jmax + ng;
+    sim->jmaxo_ = jmax_+ ng;
+
     sim->ng = ng;
     sim->nfield = nfield;
     sim->dx = w/nx;
@@ -43,7 +69,6 @@ central2d_t* central2d_init(float w, float h, int nx, int ny,
 
     return sim;
 }
-
 
 void central2d_free(central2d_t* sim)
 {
@@ -86,27 +111,142 @@ void copy_subgrid(float* restrict dst,
             dst[iy*stride+ix] = src[iy*stride+ix];
 }
 
-void central2d_periodic(float* restrict u,
-                        int nx, int ny, int ng, int nfield)
+void central2d_BCpush(central2d_t* sim_
+                      central2d_t* sim); //push just BCs to global grid
 {
-    // Stride and number per field
-    int s = nx + 2*ng;
-    int field_stride = (ny+2*ng)*s;
-
-    // Offsets of left, right, top, and bottom data blocks and ghost blocks
-    int l = nx,   lg = 0;
-    int r = ng,   rg = nx+ng;
-    int b = ny*s, bg = 0;
-    int t = ng*s, tg = (nx+ng)*s;
-
-    // Copy data into ghost cells on each side
-    for (int k = 0; k < nfield; ++k) {
-        float* uk = u + k*field_stride;
-        copy_subgrid(uk+lg, uk+l, ng, ny+2*ng, s);
-        copy_subgrid(uk+rg, uk+r, ng, ny+2*ng, s);
-        copy_subgrid(uk+tg, uk+t, nx+2*ng, ng, s);
-        copy_subgrid(uk+bg, uk+b, nx+2*ng, ng, s);
+  float* u_ = sim_->u;
+  float* u = sim->u;
+  int nx_ = sim_-> nx;
+  int ny_ = sim_-> ny;
+  
+  //copy left boundary
+  int i = 0;
+  for(int j=0;j<=ny_; j++){
+    u[central2d_offset(sim,0,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,0,i,j)];
+    u[central2d_offset(sim,1,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,1,i,j)];
+    u[central2d_offset(sim,2,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,2,i,j)];
+    u[central2d_offset(sim,3,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,3,i,j)];
+    u[central2d_offset(sim,4,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,4,i,j)];
     }
+
+  //copy right boundary
+  int i = nx_;
+  for(int j=0;j<=ny_; j++){
+    u[central2d_offset(sim,0,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,0,i,j)];
+    u[central2d_offset(sim,1,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,1,i,j)];
+    u[central2d_offset(sim,2,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,2,i,j)];
+    u[central2d_offset(sim,3,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,3,i,j)];
+    u[central2d_offset(sim,4,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,4,i,j)];
+    }
+
+  //copy bottom boundary
+  int j = 0;
+  for(int i=0;ji=nx_; i++){
+    u[central2d_offset(sim,0,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,0,i,j)];
+    u[central2d_offset(sim,1,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,1,i,j)];
+    u[central2d_offset(sim,2,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,2,i,j)];
+    u[central2d_offset(sim,3,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,3,i,j)];
+    u[central2d_offset(sim,4,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,4,i,j)];
+    }
+
+  //copy top boundary
+  int j = ny_;
+  for(int i=0;i<=nx_; i++){
+    u[central2d_offset(sim,0,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,0,i,j)];
+    u[central2d_offset(sim,1,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,1,i,j)];
+    u[central2d_offset(sim,2,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,2,i,j)];
+    u[central2d_offset(sim,3,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,3,i,j)];
+    u[central2d_offset(sim,4,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,4,i,j)];
+    }
+  
+  
+}
+
+void central2d_BCset(central2d_t* sim_,central2d_t* sim)
+{
+  float* u_ = sim_->u;
+  float* u = sim->u;
+  int nx_ = sim_-> nx;
+  int ny_ = sim_-> ny;
+  int irank = omp_get_thread_num();
+  int imin = sim-> imin;
+  int imin_ = sim_-> imin_;
+  int jmin = sim-> jmin;
+  int jmin_ = sim_-> jmin_;
+  int imax = sim-> imax;
+  int imax_ = sim_-> imax_;
+  int jmax = sim-> jmax;
+  int jmax_ = sim_-> jmax_;
+  
+  //Side BCs
+  if(imin_ == imin) { // On left wall, periodic
+    int i = 0;
+      for(int j=0;j=ny_;j++)
+        for(int gcell=0;gcell<=ng; ++gcell){
+//copy from global right side
+        }
+  }
+    else if(imax_ == imax) { // On right wall, periodic
+      int i = nx_;
+      for(int j=0;j=ny_;j++)
+        for(int gcell=0;gcell<=ng; ++gcell){
+//copy from global left side
+      
+      
+        }
+    }
+    else {//Internal domain
+      // Left subdomain side
+      int i = 0;
+      for(int j=0;j=ny_;j++)
+        for(int gcell=0;gcell<=ng; ++gcell){
+//copy from global neighbor
+        
+        
+        }
+    
+      // Right subdomain side
+      int i = nx_;
+      for(int j=0;j=ny_;j++)
+        for(int gcell=0;gcell<=ng; ++gcell){
+          //copy from global neighbor
+        }
+    }
+  
+    //Top/Bottom BCs
+  if(jmin_ == jmin) { // On bottom wall, periodic
+    int j = 0;
+      for(int i=0;i=nx_;i++)
+        for(int gcell=0;gcell<=ng; ++gcell){
+//copy from global top
+        }
+    else if(jmax_ == jmax) { // On top wall, periodic
+      int j = ny_;
+      for(int i=0;i=nx_;i++)
+        for(int gcell=0;gcell<=ng; ++gcell){
+      //copy from global bottom
+      
+      
+        }
+    }
+    else {//Internal domain
+      // Left subdomain side
+      int j = 0;
+      for(int i=0;i=nx_;i++)
+        for(int gcell=0;gcell<=ng; ++gcell){
+        
+     //copy from global neighbor
+        
+        }
+      // Right subdomain side
+      int j = ny_;
+      for(int i=0;i=nx_;i++)
+        for(int gcell=0;gcell<=ng; ++gcell){
+          //copy from global neighbor
+        }
+    
+    }
+    
 }
 
 
@@ -358,24 +498,37 @@ void central2d_step(float* restrict u, float* restrict v,
  */
 
 static
-int central2d_xrun(float* restrict u, float* restrict v,
-                   float* restrict scratch,
-                   float* restrict f,
-                   float* restrict g,
-                   int nx, int ny, int ng,
-                   int nfield, flux_t flux, speed_t speed,
-                   float tfinal, float dx, float dy, float cfl)
+int central2d_xrun(central2d_t* sim_, central2d_t* sim, float tfinal)
 {
+   // Values from processor simulation domain
+    float* restrict u = sim_ -> u;
+    float* restrict v = sim_ -> v;
+    float* restrict scratch = sim_ -> scratch;
+    float* restrict f = sim_ -> f;
+    float* restrict g = sim_ -> g;
+    int nx = sim_ -> nx;
+    int ny = sim_ -> ny;
+    int ng = sim_ -> ng;
+    int nfield = sim_ -> nfield;
+    flux_t = sim_ -> flux;
+    speed_t = sim_ -> speed;
+    float dx = sim_ -> dx;
+    float dy = sim_ -> dy;
+    float cfl = sim_ -> cfl;
+  
     int nstep = 0;
     int nx_all = nx + 2*ng;
     int ny_all = ny + 2*ng;
+  
     bool done = false;
     float t = 0;
     while (!done) {
+        central2d_BCpush(sim_,sim); //push just BCs to global grid
         float cxy[2] = {1.0e-15f, 1.0e-15f};
-        central2d_periodic(u, nx, ny, ng, nfield);
         speed(cxy, u, nx_all * ny_all, nx_all * ny_all);
         float dt = cfl / fmaxf(cxy[0]/dx, cxy[1]/dy);
+        #pragma omp barrier //wait to make sure get most restrictive CFL
+        central2d_BCset(sim_,sim); //fill ghost cells from updated global grid
         if (t + 2*dt >= tfinal) {
             dt = (tfinal-t)/2;
             done = true;
@@ -395,11 +548,7 @@ int central2d_xrun(float* restrict u, float* restrict v,
 }
 
 
-int central2d_run(central2d_t* sim, float tfinal)
+int central2d_run(central2d_t* sim_, central2d_t* sim, float tfinal)
 {
-    return central2d_xrun(sim->u, sim->v, sim->scratch,
-                          sim->f, sim->g,
-                          sim->nx, sim->ny, sim->ng,
-                          sim->nfield, sim->flux, sim->speed,
-                          tfinal, sim->dx, sim->dy, sim->cfl);
+    return central2d_xrun(sim_,sim, tfinal);
 }
