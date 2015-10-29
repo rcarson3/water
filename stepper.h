@@ -108,10 +108,14 @@ int central2d_run(central2d_t* sim_, central2d_t* sim, float tfinal);
  * for applying the BCs.
  */
 
-//void central2d_BCpush(float* restrict u_, float* restrict u,
+void central2d_periodic(float* restrict u,
+                        int nx, int ny, int ng, int nfield);
+
+//void central2d_pushBC(float* restrict u_, float* restrict u,
 //                      int nx_, int ny_, int ng,
 //                      int nx, int ny,
 //                      int imin_, int jmin_);
+
 //void central2d_BCset(float* restrict u_, float* restrict u,
 //                     int nx_, int ny_,int ng,
 //                     int nx, int ny,

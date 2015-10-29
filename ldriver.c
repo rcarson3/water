@@ -221,6 +221,7 @@ int run_sim(lua_State* L)
                                       3,shallow2d_flux,shallow2d_speed,
                                       cfl);
     lua_init_sim(L,sim);
+    central2d_periodic(sim->u,nx,ny,sim->ng,sim->nfield);
     printf("%g %g %d %d %g %d %g\n", w, h, nx, ny, cfl, frames, ftime);
     FILE* viz = viz_open(fname, sim);
     solution_check(sim);
@@ -250,7 +251,6 @@ int run_sim(lua_State* L)
   //Initialize parallel environment
 #pragma omp parallel private(irank,w_,h_,nx_,ny_, sim_, imin_,jmin_,imax_,jmax_)
   {
-    // Can't have shallow2d_flux_ or shallow2d_speed_ be private unless it is known about during compiling time. Also cannot use default(private) because C has some variables that must be shared.... Lame
     int nprocpos = omp_get_num_threads();
 
     if(nprocpos < nproc){
@@ -259,11 +259,9 @@ int run_sim(lua_State* L)
     }
     
     int irank = omp_get_thread_num();
-    //Change to indexing starting at 1
-    irank = irank+1;
     
     //Make first thread the root
-    int iroot = 1;
+    int iroot = 0;
     if(irank==iroot) {printf("Number of threads used: %d\n",nproc);}
     // Decompose into subdomains
     w_ = w/npx;
@@ -271,7 +269,7 @@ int run_sim(lua_State* L)
     nx_ = nx/npx;
     ny_ = ny/npy;
     
-    int rank = 0;
+    int rank = -1;
     // Tile starting from bottom left, moving to right, then up
     for(int j=1; j<=npy; j++)
       for(int i=1; i<=npx; i++){
@@ -281,6 +279,7 @@ int run_sim(lua_State* L)
           jmin_ = ny_*(j-1);
           imax_ = nx_*i;
           jmax_ = ny_*j;
+          printf("irank=%d imin_=%d jmin_=%d imax_=%d jmax_=%d \n",irank, imin_,jmin_,imax_,jmax_);
         }
     }
     sim_ = central2d_init(w_,h_,nx_,ny_,
@@ -294,7 +293,6 @@ int run_sim(lua_State* L)
 #ifdef _OPENMP
         double t0 = omp_get_wtime();
         // Compute on local data
-        printf("Number of procs really using: %d", omp_get_num_threads());
         int nstep = central2d_run(sim_,sim, ftime);
         // Transmit local data to global field
         loc2global(sim_,sim);
@@ -365,8 +363,8 @@ void init_subdomain(central2d_t* sim_,central2d_t* sim)
   float* u_ = sim_->u;
   
   //Each processor takes it's data from the right spots in the global sim
-  for(int j=0;j<=ny_; j++)
-    for(int i=0;i<=nx_; i++){
+  for(int j=-ng;j<=ny_+ng; j++)
+    for(int i=-ng;i<=nx_+ng; i++){
       u_[central2d_offset(nx_,ny_,ng,0,i,j)] = u[central2d_offset(nx,ny,ng,0,imin_+i,jmin_+j)];
       u_[central2d_offset(nx_,ny_,ng,1,i,j)] = u[central2d_offset(nx,ny,ng,1,imin_+i,jmin_+j)];
       u_[central2d_offset(nx_,ny_,ng,2,i,j)] = u[central2d_offset(nx,ny,ng,2,imin_+i,jmin_+j)];
