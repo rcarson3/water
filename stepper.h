@@ -81,7 +81,7 @@ void central2d_free(central2d_t* sim);
  * (zero-based) cell index, where cell `(0,0)` is a corner
  * real (non-ghost) cell.
  */
-int  central2d_offset(central2d_t* sim, int k, int ix, int iy);
+int central2d_offset(int nx, int ny, int ng, int k, int ix, int iy);
 
 /**
  * ### Running the simulation
@@ -107,7 +107,16 @@ int central2d_run(central2d_t* sim_, central2d_t* sim, float tfinal);
  * public in the eventuality that I might swap in a function pointer
  * for applying the BCs.
  */
-void central2d_BCset(central2d_t* sim_, central2d_t* sim);
+
+//void central2d_BCpush(float* restrict u_, float* restrict u,
+//                      int nx_, int ny_, int ng,
+//                      int nx, int ny,
+//                      int imin_, int jmin_);
+//void central2d_BCset(float* restrict u_, float* restrict u,
+//                     int nx_, int ny_,int ng,
+//                     int nx, int ny,
+//                     int imin_, int jmin_, int imax_, int jmax_,
+//                     int imin, int jmin, int imax, int jmax);
 
 
 // Subdomain decomposition

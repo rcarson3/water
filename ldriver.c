@@ -36,17 +36,17 @@
 
 void solution_check(central2d_t* sim)
 {
-    int nx = sim->nx, ny = sim->ny;
+    int nx = sim->nx, ny = sim->ny, ng = sim-> ng;
     float* u = sim->u;
     float h_sum = 0, hu_sum = 0, hv_sum = 0;
-    float hmin = u[central2d_offset(sim,0,0,0)];
+    float hmin = u[central2d_offset(nx,ny,ng,0,0,0)];
     float hmax = hmin;
     for (int j = 0; j < ny; ++j)
         for (int i = 0; i < nx; ++i) {
-            float h = u[central2d_offset(sim,0,i,j)];
+            float h = u[central2d_offset(nx,ny,ng,0,i,j)];
             h_sum += h;
-            hu_sum += u[central2d_offset(sim,1,i,j)];
-            hv_sum += u[central2d_offset(sim,2,i,j)];
+            hu_sum += u[central2d_offset(nx,ny,ng,1,i,j)];
+            hv_sum += u[central2d_offset(nx,ny,ng,2,i,j)];
             hmax = fmaxf(h, hmax);
             hmin = fminf(h, hmin);
         }
@@ -88,7 +88,7 @@ void viz_frame(FILE* fp, central2d_t* sim)
 {
     if (fp)
         for (int iy = 0; iy < sim->ny; ++iy)
-            fwrite(sim->u + central2d_offset(sim,0,0,iy),
+            fwrite(sim->u + central2d_offset(sim->nx,sim->ny,sim->ng,0,0,iy),
                    sizeof(float), sim->nx, fp);
 }
 
@@ -162,7 +162,7 @@ void lua_init_sim(lua_State* L, central2d_t* sim)
     if (lua_type(L, -1) != LUA_TFUNCTION)
         luaL_error(L, "Expected init to be a string");
 
-    int nx = sim->nx, ny = sim->ny, nfield = sim->nfield;
+    int nx = sim->nx, ny = sim->ny, ng= sim->ng, nfield = sim->nfield;
     float dx = sim->dx, dy = sim->dy;
     float* u = sim->u;
 
@@ -175,7 +175,7 @@ void lua_init_sim(lua_State* L, central2d_t* sim)
             lua_pushnumber(L, y);
             lua_call(L, 2, nfield);
             for (int k = 0; k < nfield; ++k)
-                u[central2d_offset(sim,k,ix,iy)] = lua_tonumber(L, k-nfield);
+                u[central2d_offset(nx,ny,ng,k,ix,iy)] = lua_tonumber(L, k-nfield);
             lua_pop(L, nfield);
         }
     }
@@ -294,6 +294,7 @@ int run_sim(lua_State* L)
 #ifdef _OPENMP
         double t0 = omp_get_wtime();
         // Compute on local data
+        printf("Number of procs really using: %d", omp_get_num_threads());
         int nstep = central2d_run(sim_,sim, ftime);
         // Transmit local data to global field
         loc2global(sim_,sim);
@@ -331,6 +332,9 @@ void loc2global(central2d_t* sim_,central2d_t*  sim)
 {
   int nx_ = sim_ -> nx;
   int ny_ = sim_ -> ny;
+  int nx = sim -> nx;
+  int ny = sim -> ny;
+  int ng = sim_ -> ng;
   int imin_ = sim_ -> imin_;
   int jmin_ = sim_ -> jmin_;
   float* u = sim->u;
@@ -339,11 +343,11 @@ void loc2global(central2d_t* sim_,central2d_t*  sim)
   //Each processor takes it's data from the right spots in the global sim
   for(int j=0;j<=ny_; j++)
     for(int i=0;i<=nx_; i++){
-      u[central2d_offset(sim,0,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,0,i,j)];
-      u[central2d_offset(sim,1,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,1,i,j)];
-      u[central2d_offset(sim,2,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,2,i,j)];
-      u[central2d_offset(sim,3,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,3,i,j)];
-      u[central2d_offset(sim,4,imin_+i,jmin_+j)] = u_[central2d_offset(sim_,4,i,j)];
+      u[central2d_offset(nx,ny,ng,0,imin_+i,jmin_+j)] = u_[central2d_offset(nx_,ny_,ng,0,i,j)];
+      u[central2d_offset(nx,ny,ng,1,imin_+i,jmin_+j)] = u_[central2d_offset(nx_,ny_,ng,1,i,j)];
+      u[central2d_offset(nx,ny,ng,2,imin_+i,jmin_+j)] = u_[central2d_offset(nx_,ny_,ng,2,i,j)];
+      u[central2d_offset(nx,ny,ng,3,imin_+i,jmin_+j)] = u_[central2d_offset(nx_,ny_,ng,3,i,j)];
+      u[central2d_offset(nx,ny,ng,4,imin_+i,jmin_+j)] = u_[central2d_offset(nx_,ny_,ng,4,i,j)];
     }
 }
 
@@ -351,8 +355,10 @@ void init_subdomain(central2d_t* sim_,central2d_t* sim)
 {
 
   int nx_ = sim_ -> nx;
-
   int ny_ = sim_ -> ny;
+  int nx = sim -> nx;
+  int ny = sim -> ny;
+  int ng = sim_ -> ng;
   int imin_ = sim_ -> imin_;
   int jmin_ = sim_ -> jmin_;
   float* u = sim->u;
@@ -361,11 +367,11 @@ void init_subdomain(central2d_t* sim_,central2d_t* sim)
   //Each processor takes it's data from the right spots in the global sim
   for(int j=0;j<=ny_; j++)
     for(int i=0;i<=nx_; i++){
-      u_[central2d_offset(sim_,0,i,j)] = u[central2d_offset(sim,0,imin_+i,jmin_+j)];
-      u_[central2d_offset(sim_,1,i,j)] = u[central2d_offset(sim,1,imin_+i,jmin_+j)];
-      u_[central2d_offset(sim_,2,i,j)] = u[central2d_offset(sim,2,imin_+i,jmin_+j)];
-      u_[central2d_offset(sim_,3,i,j)] = u[central2d_offset(sim,3,imin_+i,jmin_+j)];
-      u_[central2d_offset(sim_,4,i,j)] = u[central2d_offset(sim,4,imin_+i,jmin_+j)];
+      u_[central2d_offset(nx_,ny_,ng,0,i,j)] = u[central2d_offset(nx,ny,ng,0,imin_+i,jmin_+j)];
+      u_[central2d_offset(nx_,ny_,ng,1,i,j)] = u[central2d_offset(nx,ny,ng,1,imin_+i,jmin_+j)];
+      u_[central2d_offset(nx_,ny_,ng,2,i,j)] = u[central2d_offset(nx,ny,ng,2,imin_+i,jmin_+j)];
+      u_[central2d_offset(nx_,ny_,ng,3,i,j)] = u[central2d_offset(nx,ny,ng,3,imin_+i,jmin_+j)];
+      u_[central2d_offset(nx_,ny_,ng,4,i,j)] = u[central2d_offset(nx,ny,ng,4,imin_+i,jmin_+j)];
     }
   
   
