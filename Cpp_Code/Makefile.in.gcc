@@ -1,19 +1,8 @@
-<<<<<<< HEAD:Makefile.in.gcc
-CC=gcc
-CFLAGS=-std=c99 -g
-
-# If you're using gcc, these are good flags to try
-OPTFLAGS=-O3 -fopenmp
-=======
 CXX=g++
 CXXFLAGS=-std=c++14 -g
 
 # If you're using icc, these are good flags to try
 OPTFLAGS=-O3 -fopenmp -funroll-loops -ftree-vectorize -mtune=intel
->>>>>>> master:Cpp_Code/Makefile.in.gcc
 
-CFLAGS+=$(OPTFLAGS)
+CXXFLAGS+=$(OPTFLAGS)
 PYTHON=python
-
-LUA_CFLAGS=-I/share/apps/utils/include
-LUA_LIBS=-L/share/apps/utils/lib -llua
