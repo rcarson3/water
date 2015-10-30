@@ -56,6 +56,7 @@ central2d_t* central2d_init(float w, float h, int nx, int ny,
     sim->flux = flux;
     sim->speed = speed;
     sim->cfl = cfl;
+    sim-> dt= (float*) malloc((sizeof(float)));
 
     int nx_all = nx + 2*ng;
     int ny_all = ny + 2*ng;
@@ -542,7 +543,7 @@ void central2d_step(float* restrict u, float* restrict v,
  */
 
 static
-int central2d_xrun(central2d_t* restrict sim_, float* restrict ug, int nxg, int nyg, float tfinal)
+int central2d_xrun(central2d_t* restrict sim_, float* restrict ug, int nxg, int nyg, float* restrict dtg, float tfinal)
 {
    // Values from processor simulation domain
     float* restrict u = sim_ -> u;
@@ -559,6 +560,7 @@ int central2d_xrun(central2d_t* restrict sim_, float* restrict ug, int nxg, int 
     float dx = sim_ -> dx;
     float dy = sim_ -> dy;
     float cfl = sim_ -> cfl;
+    float* restrict dt = sim_->dt;
   
     int nstep = 0;
     int nx_all = nx + 2*ng;
@@ -567,15 +569,14 @@ int central2d_xrun(central2d_t* restrict sim_, float* restrict ug, int nxg, int 
     bool done = false;
     float t = 0;
     while (!done) {
-#pragma omp critical
-      {
-        for(int i=0; i<=(nx+2*ng)*(ny+2*ng);i++){
-//          printf("i=%d u[i]=%f imin_=%d  jmin_=%d \n",i,u[i],sim_->imin_,sim_->jmin_);
-        }
-      }
+        dtg[0]=10000000; //Arbitrarily large to have min trigger
         float cxy[2] = {1.0e-15f, 1.0e-15f};
         speed(cxy, u, nx_all * ny_all, nx_all * ny_all);
-        float dt = cfl / fmaxf(cxy[0]/dx, cxy[1]/dy);
+        dt[0] = cfl / fmaxf(cxy[0]/dx, cxy[1]/dy);
+
+        dtg[0] = fminf(dtg[0],dt[0]);
+        #pragma omp barrier
+        dt[0] = dtg[0];
         central2d_pushBC(u,ug,nx,ny,ng,nxg, nyg ,sim_->imin_, sim_->jmin_); //push just BCs to global grid
         #pragma omp barrier
         #pragma omp single
@@ -585,22 +586,20 @@ int central2d_xrun(central2d_t* restrict sim_, float* restrict ug, int nxg, int 
         #pragma omp barrier //wait to make sure get most restrictive CFL and up to date ghost info
         central2d_BCset(u, ug, nx, ny, ng, nxg, nyg, sim_->imin_,sim_->jmin_,sim_->imax_,sim_->jmax_,
                         sim_->imin, sim_->jmin, sim_->imax, sim_->jmax); //fill ghost cells from updated global grid
-//        if(nstep==2) {exit(-1);}
-        if (t + 2*dt >= tfinal) {
-            dt = (tfinal-t)/2;
+        if (t + 2*dt[0] >= tfinal) {
+            dt[0] = (tfinal-t)/2;
             done = true;
         }
         central2d_step(u, v, scratch, f, g,
                        0, nx+4, ny+4, ng-2,
                        nfield, flux, speed,
-                       dt, dx, dy);
+                       dt[0], dx, dy);
         central2d_step(v, u, scratch, f, g,
                        1, nx, ny, ng,
                        nfield, flux, speed,
-                       dt, dx, dy);
-        t += 2*dt;
+                       dt[0], dx, dy);
+        t += 2*dt[0];
         nstep += 2;
-        #pragma omp barrier
     }
     return nstep;
 }
@@ -608,5 +607,5 @@ int central2d_xrun(central2d_t* restrict sim_, float* restrict ug, int nxg, int 
 
 int central2d_run(central2d_t* sim_, central2d_t* sim, float tfinal)
 {
-    return central2d_xrun(sim_,sim->u,sim->nx,sim->ny, tfinal);
+    return central2d_xrun(sim_,sim->u,sim->nx,sim->ny,sim->dt,tfinal);
 }

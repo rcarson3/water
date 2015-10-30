@@ -279,7 +279,6 @@ int run_sim(lua_State* L)
           jmin_ = ny_*(j-1);
           imax_ = nx_*i;
           jmax_ = ny_*j;
-          printf("irank=%d imin_=%d jmin_=%d imax_=%d jmax_=%d \n",irank, imin_,jmin_,imax_,jmax_);
         }
     }
     sim_ = central2d_init(w_,h_,nx_,ny_,
@@ -315,6 +314,7 @@ int run_sim(lua_State* L)
           printf("  Time: %e (%e for %d steps)\n", elapsed, elapsed/nstep, nstep);
           viz_frame(viz, sim);
       }
+      #pragma omp barrier
     }
 #ifdef _OPENMP
     //End multiple processors

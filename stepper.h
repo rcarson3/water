@@ -47,6 +47,8 @@ typedef struct central2d_t {
 
     float dx, dy; // Cell width in x/y
     float cfl;    // Max allowed CFL number
+    float* dt;
+  
 
     // Flux and speed functions
     flux_t flux;
