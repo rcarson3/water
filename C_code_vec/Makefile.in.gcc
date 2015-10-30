@@ -7,5 +7,5 @@ OPTFLAGS=-O3 -fopenmp
 CFLAGS+=$(OPTFLAGS)
 PYTHON=python
 
-LUA_CFLAGS=-I/share/apps/utils/include
-LUA_LIBS=-L/share/apps/utils/lib -llua
+LUA_CFLAGS=-I/opt/local/include
+LUA_LIBS=-L/opt/local/lib -llua
